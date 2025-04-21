@@ -1,0 +1,288 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id                     Int            @id @default(autoincrement())
+  nom                    String
+  prenom                 String
+  email                  String         @unique
+  indicatifPaysTelephone String
+  telephone              Int
+  motDePasse             String
+  image                  String?
+  role                   String         @default("CLIENT")
+  commandes              Commande[]
+  factures               Facture[]
+  paiements              Paiement[]
+  notifications          Notification[]
+  reclamations           Reclamation[]
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+}
+
+model Assistant {
+  id                     Int            @id @default(autoincrement())
+  nom                    String
+  prenom                 String
+  email                  String         @unique
+  indicatifPaysTelephone String
+  telephone              Int
+  motDePasse             String
+  image                  String?
+  role                   String         @default("ASSISTANT")
+  commandes              Commande[]     @relation("AssistantCommandes")
+  factures               Facture[]      @relation("AssistantFactures")
+  reclamations           Reclamation[]
+  notifications          Notification[]
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+}
+
+model Agent {
+  id                     Int            @id @default(autoincrement())
+  nom                    String
+  prenom                 String
+  email                  String         @unique
+  indicatifPaysTelephone String
+  telephone              Int
+  motDePasse             String
+  image                  String?
+  role                   String         @default("AGENT")
+  commandes              Commande[]     @relation("AgentCommandes")
+  factures               Facture[]
+  documents              Document[]
+  notifications          Notification[]
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+}
+
+model Administrateur {
+  id                     Int      @id @default(autoincrement())
+  nom                    String
+  prenom                 String
+  email                  String   @unique
+  indicatifPaysTelephone String
+  telephone              Int
+  motDePasse             String
+  image                  String?
+  role                   String   @default("ADMIN")
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model Commande {
+  id                             Int        @id @default(autoincrement())
+  clientId                       Int
+  assistantId                    Int?
+  agentId                        Int?
+  nom                            String
+  pays                           String
+  adresse                        String
+  dateDePickup                   DateTime
+  valeurMarchandise              Float
+  typeCommande                   String
+  typeTransport                  String
+  ecoterme                       String
+  modePaiement                   String
+  nomDestinataire                String
+  paysDestinataire               String
+  adresseDestinataire            String
+  indicatifTelephoneDestinataire String
+  telephoneDestinataire          Int
+  emailDestinataire              String
+  statut                         String     @default("En attente")
+  adresseActuel                  String?
+  dateCommande                   DateTime   @default(now())
+  client                         Client     @relation(fields: [clientId], references: [id])
+  assistant                      Assistant? @relation("AssistantCommandes", fields: [assistantId], references: [id])
+  agent                          Agent?     @relation("AgentCommandes", fields: [agentId], references: [id])
+  produits                       Produit[]
+  factures                       Facture[]
+  createdAt                      DateTime   @default(now())
+  updatedAt                      DateTime   @updatedAt
+}
+
+model Produit {
+  id                  Int      @id @default(autoincrement())
+  idCommande          Int
+  nom                 String
+  categorie           String?
+  tarifUnitaire       Float
+  poids               Float
+  largeur             Float
+  longueur            Float
+  hauteur             Float
+  quantite            Int
+  typeConditionnement String
+  fragile             Boolean  @default(false)
+  description         String?  @db.Text
+  image               String?
+  document            String?
+  commande            Commande @relation(fields: [idCommande], references: [id])
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Facture {
+  id            Int        @id @default(autoincrement())
+  idCommande    Int
+  idClient      Int
+  idAgent       Int?
+  document      String?
+  numeroFacture Int        @unique
+  montant       Float
+  dateEmission  DateTime
+  status        String     @default("En attente")
+  commande      Commande   @relation(fields: [idCommande], references: [id])
+  client        Client     @relation(fields: [idClient], references: [id])
+  agent         Agent?     @relation(fields: [idAgent], references: [id])
+  paiement      Paiement?
+  assistantId   Int?
+  assistant     Assistant? @relation("AssistantFactures", fields: [assistantId], references: [id])
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Paiement {
+  id           Int       @id @default(autoincrement())
+  idFacture    Int       @unique
+  clientId     Int
+  modePaiement String
+  statut       String    @default("En attente")
+  datePaiement DateTime?
+  montant      Float
+  facture      Facture   @relation(fields: [idFacture], references: [id])
+  client       Client    @relation(fields: [clientId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Notification {
+  id           Int        @id @default(autoincrement())
+  dateEmission DateTime   @default(now())
+  type         String
+  correspond   String
+  lu           Boolean    @default(false)
+  client       Client?    @relation(fields: [clientId], references: [id])
+  clientId     Int?
+  assistant    Assistant? @relation(fields: [assistantId], references: [id])
+  assistantId  Int?
+  agent        Agent?     @relation(fields: [agentId], references: [id])
+  agentId      Int?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Reclamation {
+  id          Int        @id @default(autoincrement())
+  idClient    Int
+  assistantId Int?
+  description String     @db.Text
+  documents   String? // JSON string containing document URLs
+  status      String     @default("Ouverte")
+  date        DateTime   @default(now())
+  sujet       String
+  client      Client     @relation(fields: [idClient], references: [id])
+  assistant   Assistant? @relation(fields: [assistantId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Document {
+  id        Int      @id @default(autoincrement())
+  idAgent   Int
+  nom       String
+  size      Float
+  url       String
+  type      String
+  statut    String   @default("À valider")
+  agent     Agent    @relation(fields: [idAgent], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Add LogisticsIncident model
+model LogisticsIncident {
+  id          String    @id @default(cuid())
+  type        String // e.g., "DELAY", "DAMAGE", "DOCUMENTATION_ERROR", "INVENTORY_ERROR"
+  description String?
+  severity    String // e.g., "LOW", "MEDIUM", "HIGH", "CRITICAL"
+  status      String // e.g., "OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"
+  reportedAt  DateTime  @default(now())
+  resolvedAt  DateTime?
+
+  // Relations
+  shipmentId  String?
+  shipment    Shipment?  @relation(fields: [shipmentId], references: [id])
+  warehouseId String?
+  warehouse   Warehouse? @relation(fields: [warehouseId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([status])
+  @@index([shipmentId])
+  @@index([warehouseId])
+}
+
+// Update Shipment model to include relation to LogisticsIncident
+model Shipment {
+  id               String    @id @default(cuid())
+  trackingNumber   String    @unique
+  status           String
+  transportMode    String
+  origin           String
+  destination      String
+  departureDate    DateTime?
+  arrivalDate      DateTime?
+  estimatedArrival DateTime?
+  distance         Float?
+  weight           Float?
+  volume           Float?
+  cost             Float?
+  region           String?
+
+  // Relations
+  warehouseId String?
+  warehouse   Warehouse?          @relation(fields: [warehouseId], references: [id])
+  incidents   LogisticsIncident[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([transportMode])
+  @@index([warehouseId])
+  @@index([region])
+}
+
+// Update Warehouse model to include relation to LogisticsIncident
+model Warehouse {
+  id       String  @id @default(cuid())
+  name     String
+  location String
+  address  String?
+  capacity Int
+  type     String? // e.g., "DISTRIBUTION", "STORAGE", "CROSS_DOCK"
+
+  // Relations
+  //inventory   Inventory[]
+  shipments Shipment[]
+  incidents LogisticsIncident[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([location])
+  @@index([type])
+}
