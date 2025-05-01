@@ -57,7 +57,7 @@ export default function CommandesPage() {
         typeTransport: order.typeTransport,
         nomDestinataire: order.nomDestinataire,
         valeurMarchandise: order.valeurMarchandise,
-        status: order.status,
+        status: order.statut,
         createdAt: new Date(order.createdAt).toLocaleDateString("fr-FR"),
       }))
 

@@ -85,6 +85,7 @@ export function useAuthSession(): UseAuthSessionReturn {
 
         // Check if user is authenticated
         if (!userData) {
+          console.log("error in requireAuth userData")
           router.push("/auth/login")
           toast({
             variant: "destructive",

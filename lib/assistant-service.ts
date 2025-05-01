@@ -80,7 +80,7 @@ export async function getAssistantCommandes(assistantId: number) {
       where: {
         OR: [
           { assistantId: assistantId },
-          { status: "En attente", assistantId: null }, // Commandes not yet assigned
+          { statut: "En attente", assistantId: null }, // Commandes not yet assigned
         ],
       },
       include: {
@@ -134,7 +134,7 @@ export async function validerCommande(commandeId: number, assistantId: number) {
     const updatedCommande = await prisma.commande.update({
       where: { id: commandeId },
       data: {
-        status: "Validée",
+        statut: "Validée",
         assistantId: assistantId,
       },
     })
@@ -160,7 +160,7 @@ export async function rejeterCommande(commandeId: number, assistantId: number, r
     const updatedCommande = await prisma.commande.update({
       where: { id: commandeId },
       data: {
-        status: "Rejetée",
+        statut: "Rejetée",
         assistantId: assistantId,
       },
     })
@@ -185,7 +185,7 @@ export async function updateCommandeStatus(commandeId: number, status: string) {
   try {
     const updatedCommande = await prisma.commande.update({
       where: { id: commandeId },
-      data: { status },
+      data: { statut },
     })
 
     // Create notification for client

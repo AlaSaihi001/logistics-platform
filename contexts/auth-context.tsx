@@ -54,11 +54,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         setIsLoading(true);
         const res = await fetch("/api/client-auth/session");
-
+        console.log("Res from checkAuth:",res)
         if (!res.ok) throw new Error("Non authentifié");
 
         const data = await res.json();
         setUser(data?.user || null);
+        // router.push('/dashboard/client')
       } catch (err) {
         console.error("Erreur de session :", err);
         setUser(null);
@@ -77,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
+      // console.log(email, password)
 
       let endpoint = "/api/client-auth/login";
       const response = await fetch(endpoint, {
@@ -85,12 +87,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ email, password }),
       });
 
+      console.log("response",response)
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || "Erreur lors de la connexion");
       }
 
       const data = await response.json();
+      console.log("data", data)
       setUser(data.user);
 
       toast({
@@ -99,8 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       // Redirection vers le tableau de bord approprié
-      if (data.redirectUrl) {
-        router.push(data.redirectUrl);
+      if (data?.user?.id) {
+        console.log('Should redirect')
+        // router.refresh();
+        // router.push('/')
+
       }
 
       return true;

@@ -1,66 +1,96 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Image from "next/image"
-import { AlertTriangle, FileText, MapPin } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Progress } from "@/components/ui/progress"
-import { ProductDetailsDialog } from "@/components/product-details-dialog"
+import { useState } from "react";
+import Image from "next/image";
+import { AlertTriangle, Clock, FileText, MapPin, Truck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
+import { ProductDetailsDialog } from "@/components/product-details-dialog";
+import { Badge } from "@/components/ui/badge";
 
 interface Product {
-  id: number
-  name: string
-  category: string
-  price: number
-  weight: string
-  dimensions: string
-  quantity: number
-  image?: string
-  description?: string
-  packaging?: string
-  isFragile?: boolean
-  unitPrice?: number
+  id: number;
+  nom: string;
+  categorie: string;
+  tarifUnitaire: number;
+  poids: number;
+  largeur: number;
+  longueur: number;
+  hauteur: number;
+  quantite: number;
+  image?: string;
+  description?: string;
+  typeConditionnement: string;
+  fragile: boolean;
 }
 
 interface Order {
-  id: number
-  number: string
-  name: string
-  status: string
-  date: string
-  transport?: {
-    departure?: {
-      name?: string
-      code?: string
-      date?: string
-    }
-    arrival?: {
-      name?: string
-      code?: string
-      date?: string
-    }
-  }
-  products?: Product[]
-  notes?: string[]
+  id: string;
+  nom: string;
+  pays: string;
+  adresse: string;
+  dateDePickup: string;
+  dateArrivage: string;
+  valeurMarchandise: number;
+  typeCommande: string;
+  typeTransport: string;
+  ecoterme: string;
+  modePaiement: string;
+  nomDestinataire: string;
+  paysDestinataire: string;
+  adresseDestinataire: string;
+  indicatifTelephoneDestinataire: string;
+  telephoneDestinataire: number;
+  emailDestinataire: string;
+  statut: string;
+  adresseActuel: string;
+  produits: Product[];
+  factures: any[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface ExpedieeOrderViewProps {
-  order: Order
+  order: Order;
 }
 
 export function ExpedieeOrderView({ order }: ExpedieeOrderViewProps) {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   if (!order) {
-    return <div>Données de commande non disponibles</div>
+    return <div>Données de commande non disponibles</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-semibold">Commande - {order.number || "N/A"}</h1>
+        <h1 className="text-xl font-semibold">
+          <div className="flex items-center justify-between">
+            <Badge
+              variant="outline"
+              className="bg-[#dbeafe] text-[#1e40af] border-[#bfdbfe] flex items-center gap-1 px-3 py-1"
+            >
+              <Truck className="h-4 w-4" />
+              <span>Commande acceptée</span>
+            </Badge>
+          </div>
+        </h1>
+
         <Button variant="outline">Imprimer commande</Button>
       </div>
 
@@ -74,32 +104,49 @@ export function ExpedieeOrderView({ order }: ExpedieeOrderViewProps) {
             <div className="text-center mb-4 md:mb-0">
               <div className="flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-blue-500" />
-                <span className="font-medium text-blue-500">{order.transport?.departure?.name || "N/A"}</span>
+                <span className="font-medium text-blue-500">
+                  {order.adresse || "N/A"}
+                </span>
               </div>
-              <div className="text-2xl font-bold mt-1">{order.transport?.departure?.code || "N/A"}</div>
+              <div className="text-2xl font-bold mt-1">
+              {order.pays || "N/A"}
+              </div>
               <div className="mt-2 text-sm text-gray-500">Date de départ</div>
-              <div className="font-medium">{order.transport?.departure?.date || "N/A"}</div>
+              <div className="font-medium">
+                <div className="font-medium">{order.dateDePickup || "N/A"}</div>
+              </div>
             </div>
 
             <div className="flex-1 px-8 mt-4 hidden md:block">
               <Progress value={75} className="h-2" />
-              <div className="mt-2 text-center text-sm text-blue-500">En transit</div>
+              <div className="mt-2 text-center text-sm text-blue-500">
+                En transit
+              </div>
             </div>
 
             <div className="text-center">
               <div className="flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-blue-500" />
-                <span className="font-medium text-blue-500">{order.transport?.arrival?.name || "N/A"}</span>
+                <span className="font-medium text-blue-500">
+                  {order.adresseDestinataire || "N/A"}
+                </span>
               </div>
-              <div className="text-2xl font-bold mt-1">{order.transport?.arrival?.code || "N/A"}</div>
-              <div className="mt-2 text-sm text-gray-500">Date d'arrivée estimée</div>
-              <div className="font-medium">{order.transport?.arrival?.date || "N/A"}</div>
+              <div className="text-2xl font-bold mt-1">
+                {order.paysDestinataire || "N/A"}
+              </div>
+              <div className="mt-2 text-sm text-gray-500">
+                Date d'arrivée estimée
+              </div>
+              <div className="font-medium">
+                <div className="font-medium">{order.dateArrivage || "N/A"}</div>
+              </div>
             </div>
           </div>
 
           <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
             <div className="text-sm text-blue-700">
-              Position actuelle: <span className="font-medium">Ouest de la Méditerranée</span>
+              Position actuelle:{" "}
+              <span className="font-medium">{order.adresseActuel}</span>
             </div>
             <Button variant="outline" size="sm" className="text-blue-700">
               Voir sur la carte
@@ -111,52 +158,68 @@ export function ExpedieeOrderView({ order }: ExpedieeOrderViewProps) {
       {/* Liste des Produits */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Liste des Produits</CardTitle>
+          <CardTitle className="text-lg">Produits</CardTitle>
+          <CardDescription>
+            Liste des produits de votre commande
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px]">Image</TableHead>
-                  <TableHead>Produit</TableHead>
-                  <TableHead>Catégorie</TableHead>
-                  <TableHead>Prix unitaire</TableHead>
-                  <TableHead>Poids</TableHead>
-                  <TableHead>Dimensions</TableHead>
-                  <TableHead>Quantité</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {order.products?.map((product) => (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Image</TableHead>
+                <TableHead>Produit</TableHead>
+                <TableHead>Catégorie</TableHead>
+                <TableHead>Prix unitaire</TableHead>
+                <TableHead>Poids</TableHead>
+                <TableHead>Dimensions</TableHead>
+                <TableHead>Quantité</TableHead>
+                <TableHead>Fragile</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {order.produits && order.produits.length > 0 ? (
+                order.produits.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell>
-                      <div className="relative w-16 h-16 rounded-lg bg-gray-100">
+                      <div className="relative w-16 h-16 rounded-lg bg-gray-100 overflow-hidden">
                         <Image
                           src={product.image || "/placeholder.svg"}
-                          alt={product.name}
+                          alt={product.nom}
                           fill
-                          className="rounded-lg object-cover"
+                          className="object-cover"
                         />
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">{product.name || "N/A"}</TableCell>
-                    <TableCell>{product.category || "N/A"}</TableCell>
-                    <TableCell>{product.price ? `${product.price}€` : "N/A"}</TableCell>
-                    <TableCell>{product.weight || "N/A"}</TableCell>
-                    <TableCell>{product.dimensions || "N/A"}</TableCell>
-                    <TableCell>{product.quantity || "N/A"}</TableCell>
+                    <TableCell className="font-medium">{product.nom}</TableCell>
+                    <TableCell>{product.categorie || "-"}</TableCell>
+                    <TableCell>{`${product.tarifUnitaire.toFixed(
+                      2
+                    )} €`}</TableCell>
+                    <TableCell>{`${product.poids} Kg`}</TableCell>
+                    <TableCell>{`${product.longueur}x${product.largeur}x${product.hauteur}`}</TableCell>
+                    <TableCell>{product.quantite}</TableCell>
                     <TableCell>
-                      <Button variant="outline" size="sm" onClick={() => setSelectedProduct(product)}>
-                        Voir détails
-                      </Button>
+                      {product.fragile ? (
+                        <Badge variant="destructive">Oui</Badge>
+                      ) : (
+                        <Badge variant="secondary">Non</Badge>
+                      )}
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={8}
+                    className="text-center text-muted-foreground"
+                  >
+                    Aucun produit
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
@@ -196,7 +259,13 @@ export function ExpedieeOrderView({ order }: ExpedieeOrderViewProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
-              <Image src="/placeholder.svg" alt="Support Agent" width={48} height={48} className="rounded-full" />
+              <Image
+                src="/placeholder.svg"
+                alt="Support Agent"
+                width={48}
+                height={48}
+                className="rounded-full"
+              />
               <div>
                 <div className="font-medium">Sarah Dubois</div>
                 <div className="text-sm text-gray-500">Agent de support</div>
@@ -220,5 +289,5 @@ export function ExpedieeOrderView({ order }: ExpedieeOrderViewProps) {
         />
       )}
     </div>
-  )
+  );
 }

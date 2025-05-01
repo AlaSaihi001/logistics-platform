@@ -88,6 +88,7 @@ model Commande {
   pays                           String
   adresse                        String
   dateDePickup                   DateTime
+  dateArrivage                   String
   valeurMarchandise              Float
   typeCommande                   String
   typeTransport                  String
@@ -109,6 +110,7 @@ model Commande {
   factures                       Facture[]
   createdAt                      DateTime   @default(now())
   updatedAt                      DateTime   @updatedAt
+  notes                          Json
 }
 
 model Produit {
@@ -187,12 +189,13 @@ model Reclamation {
   idClient    Int
   assistantId Int?
   description String     @db.Text
-  documents   String? // JSON string containing document URLs
+  documents   Json? // JSON pour stocker les documents sous forme de tableau d'objets { nom, url }
   status      String     @default("Ouverte")
   date        DateTime   @default(now())
   sujet       String
   client      Client     @relation(fields: [idClient], references: [id])
   assistant   Assistant? @relation(fields: [assistantId], references: [id])
+  response    String?    @db.Text // Réponse de l'assistant (make sure it's optional)
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }

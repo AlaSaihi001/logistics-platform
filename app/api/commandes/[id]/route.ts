@@ -1,24 +1,22 @@
-import type { NextRequest } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import prisma from "@/lib/prisma"
+import type { NextRequest } from "next/server";
+import { getUserFromToken } from "@/lib/jwt-utils";
+import prisma from "@/lib/prisma";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getUserFromToken(req);
 
-    if (!session) {
-      return Response.json({ error: "Non autorisé" }, { status: 401 })
+    if (!user) {
+      return Response.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const userId = Number.parseInt(session.user.id)
-    const role = session.user.role
-    const orderId = Number.parseInt(params.id)
+    const userId = Number.parseInt(user.id);
+    const role = user.role;
+    const orderId = Number.parseInt(params.id);
 
-    let commande
+    let commande;
 
     if (role === "CLIENT") {
-      // Client can only see their own orders
       commande = await prisma.commande.findFirst({
         where: {
           id: orderId,
@@ -28,9 +26,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
           produits: true,
           factures: true,
         },
-      })
+      });
     } else if (role === "ASSISTANT") {
-      // Assistant can see all orders
       commande = await prisma.commande.findUnique({
         where: {
           id: orderId,
@@ -47,176 +44,190 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
             },
           },
         },
-      })
+      });
     } else {
-      return Response.json({ error: "Rôle non autorisé" }, { status: 403 })
+      return Response.json({ error: "Rôle non autorisé" }, { status: 403 });
     }
 
     if (!commande) {
-      return Response.json({ error: "Commande non trouvée" }, { status: 404 })
+      return Response.json({ error: "Commande non trouvée" }, { status: 404 });
     }
 
-    // Add cache control headers
     return new Response(JSON.stringify(commande), {
       headers: {
         "Content-Type": "application/json",
         "Cache-Control": "max-age=60, s-maxage=60, stale-while-revalidate=300",
       },
-    })
+    });
   } catch (error) {
-    console.error("Error fetching order:", error)
-    return Response.json({ error: "Erreur serveur" }, { status: 500 })
+    console.error("Error fetching order:", error);
+    return Response.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getUserFromToken(req);
 
-    if (!session) {
-      return Response.json({ error: "Non autorisé" }, { status: 401 })
+    if (!user) {
+      return Response.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const role = session.user.role
-    const orderId = Number.parseInt(params.id)
-    const body = await req.json()
+    const role = user.role;
+    const orderId = Number.parseInt(params.id);
+    const body = await req.json();
 
-    // Check if the order exists
     const existingOrder = await prisma.commande.findUnique({
       where: { id: orderId },
-    })
+      include: { produits: true },
+    });
 
     if (!existingOrder) {
-      return Response.json({ error: "Commande non trouvée" }, { status: 404 })
+      return Response.json({ error: "Commande non trouvée" }, { status: 404 });
     }
 
-    // Different update logic based on role
     if (role === "CLIENT") {
-      // Client can only update their own orders and only if they are in "En attente" status
-      const clientId = Number.parseInt(session.user.id)
+      const clientId = Number.parseInt(user.id);
 
       if (existingOrder.clientId !== clientId) {
-        return Response.json({ error: "Non autorisé" }, { status: 403 })
+        return Response.json({ error: "Non autorisé" }, { status: 403 });
       }
 
-      if (existingOrder.status !== "En attente") {
-        return Response.json({ error: "Impossible de modifier une commande qui n'est pas en attente" }, { status: 400 })
+      if (existingOrder.statut !== "En attente") {
+        return Response.json({ error: "Impossible de modifier une commande qui n'est pas en attente" }, { status: 400 });
       }
 
-      // Update order
+      // 🔥 Update commande principale
       const updatedOrder = await prisma.commande.update({
         where: { id: orderId },
         data: {
           nom: body.nom,
           pays: body.pays,
           adresse: body.adresse,
-          dateDePickup: new Date(body.dateDePickup),
-          valeurMarchandise: Number.parseFloat(body.valeurMarchandise),
+          valeurMarchandise: Number(body.valeurMarchandise),
           typeCommande: body.typeCommande,
           typeTransport: body.typeTransport,
           ecoterme: body.ecoterme,
           modePaiement: body.modePaiement,
+          dateDePickup: body.dateDePickup ? new Date(body.dateDePickup) : existingOrder.dateDePickup,
           nomDestinataire: body.nomDestinataire,
           paysDestinataire: body.paysDestinataire,
           adresseDestinataire: body.adresseDestinataire,
           indicatifTelephoneDestinataire: body.indicatifTelephoneDestinataire,
-          telephoneDestinataire: Number.parseInt(body.telephoneDestinataire),
+          telephoneDestinataire: Number(body.telephoneDestinataire),
           emailDestinataire: body.emailDestinataire,
         },
-        include: {
-          produits: true,
-        },
-      })
+      });
 
-      return Response.json(updatedOrder)
-    } else if (role === "ASSISTANT") {
-      // Assistant can update order status and assign themselves
-      const assistantId = Number.parseInt(session.user.id)
+      // 🔥 Supprimer tous les anciens produits
+      await prisma.produit.deleteMany({
+        where: { idCommande: orderId },
+      });
 
-      // Update order
+      // 🔥 Ajouter les nouveaux produits
+      if (body.produits && Array.isArray(body.produits)) {
+        await prisma.produit.createMany({
+          data: body.produits.map((p: any) => ({
+            idCommande: orderId,
+            nom: p.nom,
+            categorie: p.categorie,
+            tarifUnitaire: Number(p.tarifUnitaire),
+            poids: Number(p.poids),
+            largeur: Number(p.largeur),
+            longueur: Number(p.longueur),
+            hauteur: Number(p.hauteur),
+            quantite: Number(p.quantite),
+            typeConditionnement: p.typeConditionnement,
+            fragile: Boolean(p.fragile),
+            description: p.description || "",
+            image: typeof p.image === "string" ? p.image : null,
+            document: typeof p.document === "string" ? p.document : null,
+          })),
+        });
+      }
+
+      // 🔥 Retourner commande mise à jour avec produits
+      const updatedOrderWithProducts = await prisma.commande.findUnique({
+        where: { id: orderId },
+        include: { produits: true },
+      });
+
+      return Response.json(updatedOrderWithProducts);
+    }
+
+    // 🔥 Assistant role
+    else if (role === "ASSISTANT") {
+      const assistantId = Number.parseInt(user.id);
+
       const updatedOrder = await prisma.commande.update({
         where: { id: orderId },
         data: {
-          status: body.status || existingOrder.status,
+          statut: body.status || existingOrder.statut,
           assistantId: body.assignToMe ? assistantId : existingOrder.assistantId,
           adresseActuel: body.adresseActuel || existingOrder.adresseActuel,
         },
-        include: {
-          produits: true,
-          client: {
-            select: {
-              id: true,
-              nom: true,
-              prenom: true,
-              email: true,
-            },
-          },
-        },
-      })
+      });
 
-      // Create notification for the client
-      if (body.status && body.status !== existingOrder.status) {
+      if (body.status && body.status !== existingOrder.statut) {
         await prisma.notification.create({
           data: {
             type: "statut",
-            correspond: `Le statut de votre commande ${updatedOrder.nom} a été mis à jour: ${updatedOrder.status}.`,
+            correspond: `Le statut de votre commande ${updatedOrder.nom} a été mis à jour: ${updatedOrder.statut}.`,
             lu: false,
             clientId: updatedOrder.clientId,
           },
-        })
+        });
       }
 
-      return Response.json(updatedOrder)
-    } else {
-      return Response.json({ error: "Rôle non autorisé" }, { status: 403 })
+      return Response.json(updatedOrder);
+    }
+
+    else {
+      return Response.json({ error: "Rôle non autorisé" }, { status: 403 });
     }
   } catch (error) {
-    console.error("Error updating order:", error)
-    return Response.json({ error: "Erreur serveur" }, { status: 500 })
+    console.error("Error updating order:", error);
+    return Response.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getUserFromToken(req);
 
-    if (!session) {
-      return Response.json({ error: "Non autorisé" }, { status: 401 })
+    if (!user) {
+      return Response.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const userId = Number.parseInt(session.user.id)
-    const role = session.user.role
-    const orderId = Number.parseInt(params.id)
+    const userId = Number.parseInt(user.id);
+    const role = user.role;
+    const orderId = Number.parseInt(params.id);
 
-    // Check if the order exists
     const existingOrder = await prisma.commande.findUnique({
       where: { id: orderId },
       include: { produits: true },
-    })
+    });
 
     if (!existingOrder) {
-      return Response.json({ error: "Commande non trouvée" }, { status: 404 })
+      return Response.json({ error: "Commande non trouvée" }, { status: 404 });
     }
 
     if (role === "CLIENT") {
-      // Client can only cancel their own orders and only if they are in "En attente" status
       if (existingOrder.clientId !== userId) {
-        return Response.json({ error: "Non autorisé" }, { status: 403 })
+        return Response.json({ error: "Non autorisé" }, { status: 403 });
       }
 
-      if (existingOrder.status !== "En attente") {
-        return Response.json({ error: "Impossible d'annuler une commande qui n'est pas en attente" }, { status: 400 })
+      if (existingOrder.statut !== "En attente") {
+        return Response.json({ error: "Impossible d'annuler une commande qui n'est pas en attente" }, { status: 400 });
       }
 
-      // Update order status to "Annulée"
       const cancelledOrder = await prisma.commande.update({
         where: { id: orderId },
         data: {
-          status: "Annulée",
+          statut: "Annulée",
         },
-      })
+      });
 
-      // Create notification for the client
       await prisma.notification.create({
         data: {
           type: "commande",
@@ -224,21 +235,18 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
           lu: false,
           clientId: userId,
         },
-      })
+      });
 
-      return Response.json(cancelledOrder)
+      return Response.json(cancelledOrder);
     } else if (role === "ASSISTANT") {
-      // Assistant can reject orders
-      // Update order status to "Refusée"
       const rejectedOrder = await prisma.commande.update({
         where: { id: orderId },
         data: {
-          status: "Refusée",
+          statut: "Refusée",
           assistantId: userId,
         },
-      })
+      });
 
-      // Create notification for the client
       await prisma.notification.create({
         data: {
           type: "commande",
@@ -246,14 +254,14 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
           lu: false,
           clientId: rejectedOrder.clientId,
         },
-      })
+      });
 
-      return Response.json(rejectedOrder)
+      return Response.json(rejectedOrder);
     } else {
-      return Response.json({ error: "Rôle non autorisé" }, { status: 403 })
+      return Response.json({ error: "Rôle non autorisé" }, { status: 403 });
     }
   } catch (error) {
-    console.error("Error cancelling order:", error)
-    return Response.json({ error: "Erreur serveur" }, { status: 500 })
+    console.error("Error cancelling order:", error);
+    return Response.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

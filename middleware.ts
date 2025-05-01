@@ -5,6 +5,7 @@ import { getUserFromToken } from "@/lib/jwt-utils"
 // Routes publiques (pas besoin d'authentification)
 const publicPaths = [
   "/",
+  // "/hello",
   "/auth/login",
   "/auth/register",
   "/auth/agent/login",
@@ -31,6 +32,7 @@ const rolePathMap = {
 }
 
 export async function middleware(request: NextRequest) {
+  // console.log('middleware')
   const { pathname } = request.nextUrl
 
   // 🔒 Ignore les appels aux routes API
@@ -44,23 +46,25 @@ export async function middleware(request: NextRequest) {
   }
 
   // 🔍 Extraire l'utilisateur via le token JWT
-  const user = await getUserFromToken(request)
+  const user = getUserFromToken(request)
+  console.log("user from getUser", user)
 
   // ❌ Si l'utilisateur n'est pas connecté, redirection vers login
-  if (!user) {
-    const url = new URL("/auth/login", request.url)
-    url.searchParams.set("redirectTo", pathname)
-    return NextResponse.redirect(url)
-  }
+  // if (!user?.id) {
+  //   console.log("no user")
+  //   const url = new URL("/auth/login", request.url)
+  //   url.searchParams.set("redirectTo", pathname)
+  //   return NextResponse.redirect(url)
+  // }
 
   // 🔐 Vérifier que l'utilisateur accède bien à son propre dashboard
-  const userRole = user.role as keyof typeof rolePathMap
-  for (const [role, pathPrefix] of Object.entries(rolePathMap)) {
-    if (pathname.startsWith(pathPrefix) && role !== userRole) {
-      const url = new URL("/auth/unauthorized", request.url)
-      return NextResponse.redirect(url)
-    }
-  }
+  // const userRole = user?.role as keyof typeof rolePathMap
+  // for (const [role, pathPrefix] of Object.entries(rolePathMap)) {
+  //   if (pathname.startsWith(pathPrefix) && role !== userRole) {
+  //     const url = new URL("/auth/unauthorized", request.url)
+  //     return NextResponse.redirect(url)
+  //   }
+  // }
 
   return NextResponse.next()
 }

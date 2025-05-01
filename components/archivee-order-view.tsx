@@ -1,128 +1,172 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Image from "next/image"
-import { FileText, Star, CheckCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ProductDetailsDialog } from "@/components/product-details-dialog"
+import { useState } from "react";
+import Image from "next/image";
+import { Archive, CheckCircle, FileText, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { ProductDetailsDialog } from "@/components/product-details-dialog";
 
-interface Product {
-  id: number
-  name: string
-  category: string
-  price: number
-  weight: string
-  dimensions: string
-  quantity: number
-  image?: string
+// Define the ProductUI and Order interfaces
+
+interface ProductUI {
+  id?: number; // Local ID
+  nom: string;
+  categorie?: string;
+  tarifUnitaire: number;
+  poids: number;
+  largeur: number;
+  longueur: number;
+  hauteur: number;
+  quantite: number;
+  typeConditionnement: string;
+  fragile: boolean;
+  description?: string;
+  image?: string | File;
+  document?: string;
 }
 
 interface Order {
-  id: number
-  number: string
-  name: string
-  status: string
-  date: string
-  transport?: {
-    departure?: {
-      name?: string
-      code?: string
-      date?: string
-    }
-    arrival?: {
-      name?: string
-      code?: string
-      date?: string
-    }
-    vessel?: {
-      name?: string
-      id?: string
-      company?: string
-    }
-  }
-  products?: Product[]
+  id: string;
+  nom: string;
+  pays: string;
+  adresse: string;
+  dateDePickup: string;
+  dateArrivage: string;
+  valeurMarchandise: number;
+  typeCommande: string;
+  typeTransport: string;
+  ecoterme: string;
+  modePaiement: string;
+  nomDestinataire: string;
+  paysDestinataire: string;
+  adresseDestinataire: string;
+  indicatifTelephoneDestinataire: string;
+  telephoneDestinataire: number;
+  emailDestinataire: string;
+  statut: string;
+  adresseActuel: string;
+  produits: ProductUI[];
+  factures: any[];
+  createdAt: string;
+  updatedAt: string;
+  notes: string[];
 }
 
 interface ArchiveeOrderViewProps {
-  order: Order
+  order: Order; // Use the Order type from page.tsx
 }
 
 export function ArchiveeOrderView({ order }: ArchiveeOrderViewProps) {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [selectedProduct, setSelectedProduct] = useState<ProductUI | null>(
+    null
+  );
+
+  if (!order) {
+    return <div>Données de commande non disponibles</div>;
+  }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Commande Archivée</h1>
-
-      {/* General Information */}
-      <Card>
-        <CardContent className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Informations Générales sur la Commande</h2>
-          <div className="grid grid-cols-4 gap-4">
-            <div>
-              <div className="text-sm text-gray-500">Numéro de Commande:</div>
-              <div>{order.number}</div>
-            </div>
-            <div>
-              <div className="text-sm text-gray-500">Nom de Commande:</div>
-              <div>{order.name}</div>
-            </div>
-            <div>
-              <div className="text-sm text-gray-500">Statut:</div>
-              <div className="inline-flex px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
-                Archivée
-              </div>
-            </div>
-            <div>
-              <div className="text-sm text-gray-500">Date de Commande:</div>
-              <div>{order.date}</div>
-            </div>
+      <div className="flex justify-between items-center">
+        <h1 className="text-xl font-semibold">
+          <div className="flex items-center justify-between">
+            <Badge
+              variant="outline"
+              className="bg-[#f3f4f6] text-[#1f2937] border-[#e5e7eb] flex items-center gap-1 px-3 py-1"
+            >
+              <Archive className="h-4 w-4" />
+              <span>Commande Archivée</span>
+            </Badge>
           </div>
-        </CardContent>
-      </Card>
+        </h1>
 
-      {/* Delivery Information */}
+        <Button
+          variant="outline"
+          onClick={() => alert("Impression de la commande")}
+        >
+          Imprimer commande
+        </Button>
+      </div>
+
+      {/* Localisation & Suivi */}
       <Card>
-        <CardContent className="p-6">
-          <h2 className="text-xl font-semibold mb-6">Informations de Livraison</h2>
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="text-gray-600">Départ de {order.transport?.departure?.name ?? "N/A"}</div>
-              <div className="text-2xl font-bold mt-1">{order.transport?.departure?.code ?? "N/A"}</div>
-              <div className="mt-4">
-                <div className="text-sm text-gray-500">Date de Départ</div>
-                <div>{order.transport?.departure?.date ?? "N/A"}</div>
+        <CardHeader>
+          <CardTitle className="text-lg">Localisation & Suivi</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex flex-col md:flex-row justify-between items-start">
+            <div className="text-center mb-4 md:mb-0">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-blue-500" />
+                <span className="font-medium text-blue-500">
+                  {order.adresse || "N/A"}
+                </span>
               </div>
+              <div className="text-2xl font-bold mt-1">
+                {order.pays || "N/A"}
+              </div>
+              <div className="mt-2 text-sm text-gray-500">Date de départ</div>
+              <div className="font-medium">{order.dateDePickup || "N/A"}</div>
             </div>
 
-            <div className="flex-1 px-8 mt-4">
+            <div className="flex-1 px-8 mt-4 hidden md:block">
               <div className="h-2 bg-green-100 rounded-full relative">
                 <div className="absolute inset-y-0 left-0 bg-green-600 rounded-full w-full" />
               </div>
-              <div className="mt-2 text-center text-green-600 flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 mr-2" />
-                Livraison complétée
-              </div>
             </div>
 
-            <div className="text-right">
-              <div className="text-gray-600">Arrivé à {order.transport?.arrival?.name ?? "N/A"}</div>
-              <div className="text-2xl font-bold mt-1">{order.transport?.arrival?.code ?? "N/A"}</div>
-              <div className="mt-4">
-                <div className="text-sm text-gray-500">Date de Livraison</div>
-                <div>{order.transport?.arrival?.date ?? "N/A"}</div>
+            <div className="text-center">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-blue-500" />
+                <span className="font-medium text-blue-500">
+                  {order.adresseDestinataire || "N/A"}
+                </span>
               </div>
+              <div className="text-2xl font-bold mt-1">
+                {order.paysDestinataire || "N/A"}
+              </div>
+              <div className="mt-2 text-sm text-gray-500">Date d'arrivée</div>
+              <div className="font-medium">{order.dateArrivage || "N/A"}</div>
             </div>
+          </div>
+
+          <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+            <div className="text-sm text-blue-700">
+              Position actuelle:{" "}
+              <span className="font-medium">{order.adresseActuel}</span>
+            </div>
+            <Button variant="outline" size="sm" className="text-blue-700">
+              Voir sur la carte
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Products List */}
+      {/* Liste des Produits */}
       <Card>
-        <CardContent className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Liste des Produits Livrés</h2>
+        <CardHeader>
+          <CardTitle className="text-lg">Produits</CardTitle>
+          <CardDescription>
+            Liste des produits de votre commande
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
@@ -137,14 +181,14 @@ export function ArchiveeOrderView({ order }: ArchiveeOrderViewProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {order.products?.map((product) => (
+              {order.produits?.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell>
                     <div className="w-12 h-12 bg-gray-200 rounded">
                       {product.image && (
                         <Image
                           src={product.image || "/placeholder.svg"}
-                          alt={product.name}
+                          alt={product.nom}
                           width={48}
                           height={48}
                           className="rounded"
@@ -152,14 +196,20 @@ export function ArchiveeOrderView({ order }: ArchiveeOrderViewProps) {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.category}</TableCell>
-                  <TableCell>{product.price}€</TableCell>
-                  <TableCell>{product.weight}</TableCell>
-                  <TableCell>{product.dimensions}</TableCell>
-                  <TableCell>{product.quantity}</TableCell>
+                  <TableCell>{product.nom}</TableCell>
+                  <TableCell>{product.categorie}</TableCell>
+                  <TableCell>{product.tarifUnitaire}€</TableCell>
+                  <TableCell>{product.poids}</TableCell>
                   <TableCell>
-                    <Button variant="secondary" size="sm" onClick={() => setSelectedProduct(product)}>
+                    {product.longueur}x{product.largeur}x{product.hauteur}
+                  </TableCell>
+                  <TableCell>{product.quantite}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setSelectedProduct(product)}
+                    >
                       Détails
                     </Button>
                   </TableCell>
@@ -170,53 +220,33 @@ export function ArchiveeOrderView({ order }: ArchiveeOrderViewProps) {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-3 gap-6">
-        {/* Rating */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Évaluation Client</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-center gap-2">
-              {[1, 2, 3, 4, 5].map((rating) => (
-                <Star key={rating} className="h-8 w-8 text-yellow-400" fill="currentColor" />
-              ))}
+      {/* Notes */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Notes</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {order.notes?.map((note, index) => (
+            <div key={index} className="flex items-start gap-2 text-blue-700">
+              <AlertTriangle className="h-5 w-5 shrink-0" />
+              <span>{note}</span>
             </div>
-            <p className="text-center mt-2 text-gray-600">Excellent service !</p>
-          </CardContent>
-        </Card>
+          ))}
+        </CardContent>
+      </Card>
 
-        {/* Invoice */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Facture</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">
-              <FileText className="mr-2 h-4 w-4" />
-              Facture_Commande.pdf
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Transport Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Détails de Transport</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div>
-              <span className="font-medium">Nom du bateau/avion:</span> {order.transport?.vessel?.name ?? "N/A"}
-            </div>
-            <div>
-              <span className="font-medium">Numéro d'identification:</span> {order.transport?.vessel?.id ?? "N/A"}
-            </div>
-            <div>
-              <span className="font-medium">Compagnie de transport:</span> {order.transport?.vessel?.company ?? "N/A"}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Facture */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Facture</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" className="w-full">
+            <FileText className="mr-2 h-4 w-4" />
+            Télécharger la facture
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Support */}
       <Card>
@@ -224,7 +254,13 @@ export function ArchiveeOrderView({ order }: ArchiveeOrderViewProps) {
           <CardTitle>Support Client</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center gap-4">
-          <Image src="/placeholder.svg" alt="Support Agent" width={64} height={64} className="rounded-full" />
+          <Image
+            src="/placeholder.svg"
+            alt="Support Agent"
+            width={64}
+            height={64}
+            className="rounded-full"
+          />
           <div>
             <div className="font-medium">Samia Allagui</div>
             <div className="text-sm text-gray-500">
@@ -244,5 +280,5 @@ export function ArchiveeOrderView({ order }: ArchiveeOrderViewProps) {
         />
       )}
     </div>
-  )
+  );
 }

@@ -1,57 +1,57 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { PlusCircle } from "lucide-react"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { PlusCircle } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { OrderDetails } from "@/components/order-details"
-import { SupplierRecipient } from "@/components/supplier-recipient"
-import { ProductList } from "@/components/product-list"
-import { AddNewProduct } from "@/components/add-new-product"
-import { toast } from "@/components/ui/use-toast"
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { OrderDetails } from "@/components/order-details";
+import { SupplierRecipient } from "@/components/supplier-recipient";
+import { ProductList } from "@/components/product-list";
+import { AddNewProduct } from "@/components/add-new-product";
+import { toast } from "@/components/ui/use-toast";
 
 interface Product {
-  id: string
-  image: string | File
-  name: string
-  category: string
-  unitPrice: number
-  weight: number
+  id: string;
+  image: string | File;
+  name: string;
+  category: string;
+  unitPrice: number;
+  weight: number;
   dimensions: {
-    length: number
-    width: number
-    height: number
-  }
-  quantity: number
-  description: string
-  isFragile: boolean
-  packagingType: string
+    length: number;
+    width: number;
+    height: number;
+  };
+  quantity: number;
+  description: string;
+  isFragile: boolean;
+  packagingType: string;
 }
 
 export default function NewOrderPage() {
-  const router = useRouter()
-  const [orderDetails, setOrderDetails] = useState({})
-  const [supplierRecipient, setSupplierRecipient] = useState({})
-  const [products, setProducts] = useState<Product[]>([])
-  const [isAddingProduct, setIsAddingProduct] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [errors, setErrors] = useState({})
-  const [formData, setFormData] = useState({})
+  const router = useRouter();
+  const [orderDetails, setOrderDetails] = useState({});
+  const [supplierRecipient, setSupplierRecipient] = useState({});
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [formData, setFormData] = useState({});
 
   useEffect(() => {
     // Clean up object URLs when component unmounts
     return () => {
       products.forEach((product) => {
         if (typeof product.image === "string" && product.image.startsWith("blob:")) {
-          URL.revokeObjectURL(product.image)
+          URL.revokeObjectURL(product.image);
         }
-      })
-    }
-  }, [products])
+      });
+    };
+  }, [products]);
 
   const handleAddOrEditProduct = (newOrUpdatedProduct: Product) => {
     if (newOrUpdatedProduct.id) {
@@ -68,11 +68,11 @@ export default function NewOrderPage() {
               }
             : p,
         ),
-      )
+      );
       toast({
         title: "Produit modifié",
         description: "Le produit a été mis à jour avec succès.",
-      })
+      });
     } else {
       // Add new product
       const productWithId = {
@@ -82,20 +82,30 @@ export default function NewOrderPage() {
           newOrUpdatedProduct.image instanceof File
             ? URL.createObjectURL(newOrUpdatedProduct.image)
             : newOrUpdatedProduct.image,
-      }
-      setProducts((prevProducts) => [...prevProducts, productWithId])
+      };
+      setProducts((prevProducts) => [...prevProducts, productWithId]);
       toast({
         title: "Produit ajouté",
         description: "Le produit a été ajouté à la commande avec succès.",
-      })
+      });
     }
-    setIsAddingProduct(false)
-  }
+    setIsAddingProduct(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSubmitting(true)
-    setErrors({})
+    e.preventDefault();
+    setSubmitting(true);
+    setErrors({});
+
+    if (products.length === 0) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez ajouter au moins un produit.",
+        variant: "destructive",
+      });
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const response = await fetch("/api/commandes", {
@@ -103,44 +113,48 @@ export default function NewOrderPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
-      })
+        body: JSON.stringify({
+          ...orderDetails,
+          ...supplierRecipient,
+          produits: products,
+        }),
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
         // Handle validation errors
         if (response.status === 400 && data.validationErrors) {
-          setErrors(data.validationErrors)
+          setErrors(data.validationErrors);
           toast({
             title: "Erreur de validation",
             description: "Veuillez corriger les erreurs dans le formulaire",
             variant: "destructive",
-          })
-          return
+          });
+          return;
         }
 
         // Handle other errors
-        throw new Error(data.error || "Erreur lors de la création de la commande")
+        throw new Error(data.error || "Erreur lors de la création de la commande");
       }
 
       // Success handling
       toast({
         title: "Commande créée avec succès !",
         description: "Vous pouvez suivre son état depuis la page Commandes.",
-      })
-      router.push("/dashboard/client/commandes")
+      });
+      router.push("/dashboard/client/commandes");
     } catch (error) {
-      console.error("Error creating order:", error)
+      console.error("Error creating order:", error);
       toast({
         title: "Erreur",
         description: error instanceof Error ? error.message : "Impossible de créer la commande",
         variant: "destructive",
-      })
+      });
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -202,5 +216,5 @@ export default function NewOrderPage() {
 
       <AddNewProduct open={isAddingProduct} onClose={() => setIsAddingProduct(false)} onAdd={handleAddOrEditProduct} />
     </div>
-  )
+  );
 }

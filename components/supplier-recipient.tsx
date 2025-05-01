@@ -1,59 +1,141 @@
-"use client"
+"use client";
 
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useEffect, useState } from "react";
 
-export function SupplierRecipient({ onChange }: { onChange: (details: any) => void }) {
+interface SupplierRecipientProps {
+  supplier?: {
+    nom: string;
+    pays: string;
+    adresse: string;
+  };
+  recipient?: {
+    nomDestinataire: string;
+    paysDestinataire: string;
+    adresseDestinataire: string;
+    indicatifTelephoneDestinataire: string;
+    telephoneDestinataire: number;
+    emailDestinataire: string;
+  };
+  onChange: (details: any) => void;
+}
+
+export function SupplierRecipient({
+  supplier,
+  recipient,
+  onChange,
+}: SupplierRecipientProps) {
+  const [details, setDetails] = useState({
+    nom: "",
+    pays: "",
+    adresse: "",
+    nomDestinataire: "",
+    paysDestinataire: "",
+    adresseDestinataire: "",
+    indicatifTelephoneDestinataire: "",
+    telephoneDestinataire: "",
+    emailDestinataire: "",
+  });
+
+  useEffect(() => {
+    if (supplier || recipient) {
+      setDetails({
+        nom: supplier?.nom || "",
+        pays: supplier?.pays || "",
+        adresse: supplier?.adresse || "",
+        nomDestinataire: recipient?.nomDestinataire || "",
+        paysDestinataire: recipient?.paysDestinataire || "",
+        adresseDestinataire: recipient?.adresseDestinataire || "",
+        indicatifTelephoneDestinataire:
+          recipient?.indicatifTelephoneDestinataire || "",
+        telephoneDestinataire:
+          recipient?.telephoneDestinataire?.toString() || "",
+        emailDestinataire: recipient?.emailDestinataire || "",
+      });
+    }
+  }, [supplier, recipient]);
+
+  const handleChange = (key: string, value: string) => {
+    const updated = { ...details, [key]: value };
+    setDetails(updated);
+    onChange(updated);
+  };
+
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold">Fournisseur / Destinataire</h2>
+    <div className="space-y-8">
+      {/* Destinataire */}
+      <div className="space-y-8">
+        <h2 className="text-lg font-semibold">Destinataire</h2>
 
-      <div className="space-y-2">
-        <Label htmlFor="supplierName">Nom du fournisseur / destinataire</Label>
-        <Input id="supplierName" placeholder="Nom complet" required />
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="nomDestinataire">Nom destinataire</Label>
+          <Input
+            id="nomDestinataire"
+            value={details.nomDestinataire}
+            onChange={(e) => handleChange("nomDestinataire", e.target.value)}
+            required
+          />
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="country">Pays d'expédition & destination</Label>
-        <Select onValueChange={(value) => onChange({ country: value })}>
-          <SelectTrigger id="country">
-            <SelectValue placeholder="Sélectionner un pays" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="fr">France</SelectItem>
-            <SelectItem value="us">États-Unis</SelectItem>
-            {/* Add more countries as needed */}
-          </SelectContent>
-        </Select>
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="paysDestinataire">Pays destinataire</Label>
+          <Input
+            id="paysDestinataire"
+            value={details.paysDestinataire}
+            onChange={(e) => handleChange("paysDestinataire", e.target.value)}
+            required
+          />
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="address">Adresse complète</Label>
-        <Input id="address" placeholder="Adresse physique" required />
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="adresseDestinataire">Adresse destinataire</Label>
+          <Input
+            id="adresseDestinataire"
+            value={details.adresseDestinataire}
+            onChange={(e) =>
+              handleChange("adresseDestinataire", e.target.value)
+            }
+            required
+          />
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="phoneNumber">Numéro de téléphone</Label>
-        <div className="flex space-x-2">
-          <Select onValueChange={(value) => onChange({ phoneCountry: value })}>
-            <SelectTrigger className="w-[100px]">
-              <SelectValue placeholder="Pays" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="fr">FR +33</SelectItem>
-              <SelectItem value="us">US +1</SelectItem>
-              {/* Add more country codes as needed */}
-            </SelectContent>
-          </Select>
-          <Input id="phoneNumber" type="tel" placeholder="Numéro de téléphone" required />
+        <div className="space-y-2">
+          <Label htmlFor="telephone">Téléphone destinataire</Label>
+          <div className="flex space-x-2">
+            <Input
+              id="indicatifTelephoneDestinataire"
+              value={details.indicatifTelephoneDestinataire}
+              onChange={(e) =>
+                handleChange("indicatifTelephoneDestinataire", e.target.value)
+              }
+              placeholder="+216"
+              className="w-[100px]"
+              required
+            />
+            <Input
+              id="telephoneDestinataire"
+              value={details.telephoneDestinataire}
+              onChange={(e) =>
+                handleChange("telephoneDestinataire", e.target.value)
+              }
+              placeholder="Numéro"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="emailDestinataire">Email destinataire</Label>
+          <Input
+            id="emailDestinataire"
+            type="email"
+            value={details.emailDestinataire}
+            onChange={(e) => handleChange("emailDestinataire", e.target.value)}
+            required
+          />
         </div>
       </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" type="email" placeholder="adresse@email.com" required />
-      </div>
     </div>
-  )
+  );
 }

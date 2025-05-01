@@ -1,123 +1,128 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Image from "next/image"
-import { FileText, Star } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ProductDetailsDialog } from "@/components/product-details-dialog"
+import { useState } from "react";
+import Image from "next/image";
+import { AlertTriangle, CheckCircle, FileText, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { ProductDetailsDialog } from "@/components/product-details-dialog";
 
-interface Product {
-  id: number
-  name: string
-  category: string
-  price: number
-  weight: string
-  dimensions: string
-  quantity: number
-  image?: string
+// Define the ProductUI and Order interfaces
+
+interface ProductUI {
+  id?: number; // Local ID (موش قاعدة البيانات)
+  nom: string;
+  categorie?: string;
+  tarifUnitaire: number;
+  poids: number;
+  largeur: number;
+  longueur: number;
+  hauteur: number;
+  quantite: number;
+  typeConditionnement: string;
+  fragile: boolean;
+  description?: string;
+  image?: string | File;
+  document?: string;
 }
 
 interface Order {
-  id: number
-  number: string
-  name: string
-  status: string
-  date: string
-  transport?: {
-    departure?: {
-      name?: string
-      code?: string
-      date?: string
-    }
-    arrival?: {
-      name?: string
-      code?: string
-      date?: string
-    }
-    vessel?: {
-      name?: string
-      id?: string
-      company?: string
-    }
-  }
-  products?: Product[]
+  id: string;
+  nom: string;
+  pays: string;
+  adresse: string;
+  dateDePickup: string;
+  dateArrivage: string;
+  valeurMarchandise: number;
+  typeCommande: string;
+  typeTransport: string;
+  ecoterme: string;
+  modePaiement: string;
+  nomDestinataire: string;
+  paysDestinataire: string;
+  adresseDestinataire: string;
+  indicatifTelephoneDestinataire: string;
+  telephoneDestinataire: number;
+  emailDestinataire: string;
+  statut: string;
+  adresseActuel: string;
+  produits: ProductUI[];
+  factures: any[];
+  createdAt: string;
+  updatedAt: string;
+  notes: string[];
 }
 
 interface LivreeOrderViewProps {
-  order: Order
+  order: Order; // Use the Order type from page.tsx
 }
 
 export function LivreeOrderView({ order }: LivreeOrderViewProps) {
-  const router = useRouter()
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [selectedProduct, setSelectedProduct] = useState<ProductUI | null>(
+    null
+  );
 
-  const handleConfirmReception = () => {
-    if (confirm("Êtes-vous sûr de vouloir confirmer la réception de cette commande ?")) {
-      // Récupérer les commandes existantes
-      const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]")
-
-      // Mettre à jour le statut de la commande à "archivée"
-      const updatedOrders = existingOrders.map((o: Order) => {
-        if (o.id === order.id) {
-          return { ...o, status: "archivée" }
-        }
-        return o
-      })
-
-      // Sauvegarder les commandes mises à jour
-      localStorage.setItem("orders", JSON.stringify(updatedOrders))
-
-      // Rediriger vers le tableau des commandes
-      router.push("/dashboard/client/commandes")
-    }
+  if (!order) {
+    return <div>Données de commande non disponibles</div>;
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Commandes</h1>
-
-      {/* General Information */}
-      <Card>
-        <CardContent className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Informations Générales sur la Commande</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <div className="text-sm text-gray-500">Numéro de Commande:</div>
-              <div>{order.number}</div>
-            </div>
-            <div>
-              <div className="text-sm text-gray-500">Nom de Commande:</div>
-              <div>{order.name}</div>
-            </div>
-            <div>
-              <div className="text-sm text-gray-500">Statut:</div>
-              <div className="inline-flex px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                Livrée
-              </div>
-            </div>
-            <div>
-              <div className="text-sm text-gray-500">Date de Commande:</div>
-              <div>{order.date}</div>
-            </div>
+      <div className="flex justify-between items-center">
+        <h1 className="text-xl font-semibold">
+          <div className="flex items-center justify-between">
+            <Badge
+              variant="outline"
+              className="bg-[#dbeafe] text-[#1e40af] border-[#bfdbfe] flex items-center gap-1 px-3 py-1"
+            >
+              <CheckCircle className="h-4 w-4" />
+              <span>Commande livrée</span>
+            </Badge>
           </div>
-        </CardContent>
-      </Card>
+        </h1>
 
-      {/* Location & Tracking */}
+        <Button
+          variant="outline"
+          onClick={() => alert("Impression de la commande")}
+        >
+          Imprimer commande
+        </Button>
+      </div>
+
+      {/* Localisation & Suivi */}
       <Card>
-        <CardContent className="p-6">
-          <h2 className="text-xl font-semibold mb-6">Localisation & Suivi</h2>
+        <CardHeader>
+          <CardTitle className="text-lg">Localisation & Suivi</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
           <div className="flex flex-col md:flex-row justify-between items-start">
-            <div className="mb-4 md:mb-0">
-              <div className="text-blue-600">Départ de {order.transport?.departure?.name ?? "N/A"}</div>
-              <div className="text-2xl font-bold mt-1">{order.transport?.departure?.code ?? "N/A"}</div>
-              <div className="mt-4">
-                <div className="text-sm text-gray-500">Date de Départ</div>
-                <div>{order.transport?.departure?.date ?? "N/A"}</div>
+            <div className="text-center mb-4 md:mb-0">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-blue-500" />
+                <span className="font-medium text-blue-500">
+                  {order.adresse || "N/A"}
+                </span>
               </div>
+              <div className="text-2xl font-bold mt-1">
+                {order.pays || "N/A"}
+              </div>
+              <div className="mt-2 text-sm text-gray-500">Date de départ</div>
+              <div className="font-medium">{order.dateDePickup || "N/A"}</div>
             </div>
 
             <div className="flex-1 px-8 mt-4 hidden md:block">
@@ -126,143 +131,158 @@ export function LivreeOrderView({ order }: LivreeOrderViewProps) {
               </div>
             </div>
 
-            <div className="text-right">
-              <div className="text-blue-600">Arrivé à {order.transport?.arrival?.name ?? "N/A"}</div>
-              <div className="text-2xl font-bold mt-1">{order.transport?.arrival?.code ?? "N/A"}</div>
-              <div className="mt-4">
-                <div className="text-sm text-gray-500">Date de Livraison</div>
-                <div>{order.transport?.arrival?.date ?? "N/A"}</div>
+            <div className="text-center">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-blue-500" />
+                <span className="font-medium text-blue-500">
+                  {order.adresseDestinataire || "N/A"}
+                </span>
               </div>
+              <div className="text-2xl font-bold mt-1">
+                {order.paysDestinataire || "N/A"}
+              </div>
+              <div className="mt-2 text-sm text-gray-500">Date d'arrivée</div>
+              <div className="font-medium">{order.dateArrivage || "N/A"}</div>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Products List */}
-      <Card>
-        <CardContent className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Liste des Produits</h2>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Image du produit</TableHead>
-                  <TableHead>Nom de produit</TableHead>
-                  <TableHead>Catégorie</TableHead>
-                  <TableHead>Tarif (€)</TableHead>
-                  <TableHead>Poids</TableHead>
-                  <TableHead>Dimensions</TableHead>
-                  <TableHead>Quantité</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {order.products?.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <div className="w-12 h-12 bg-gray-200 rounded">
-                        {product.image && (
-                          <Image
-                            src={product.image || "/placeholder.svg"}
-                            alt={product.name}
-                            width={48}
-                            height={48}
-                            className="rounded"
-                          />
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{product.name}</TableCell>
-                    <TableCell>{product.category}</TableCell>
-                    <TableCell>{product.price}€</TableCell>
-                    <TableCell>{product.weight}</TableCell>
-                    <TableCell>{product.dimensions}</TableCell>
-                    <TableCell>{product.quantity}</TableCell>
-                    <TableCell>
-                      <Button variant="secondary" size="sm" onClick={() => setSelectedProduct(product)}>
-                        Détails
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Rating */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Évaluation</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-center gap-2">
-              {[1, 2, 3, 4, 5].map((rating) => (
-                <Star key={rating} className="h-8 w-8 text-yellow-400 cursor-pointer" fill="currentColor" />
-              ))}
+          <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+            <div className="text-sm text-blue-700">
+              Position actuelle:{" "}
+              <span className="font-medium">{order.adresseActuel}</span>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Invoice */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Facture</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full">
-              <FileText className="mr-2 h-4 w-4" />
-              Facture_Commande.pdf
+            <Button variant="outline" size="sm" className="text-blue-700">
+              Voir sur la carte
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Transport Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Détails de Transport</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div>
-              <span className="font-medium">Nom du bateau/avion:</span> {order.transport?.vessel?.name ?? "N/A"}
-            </div>
-            <div>
-              <span className="font-medium">Numéro d'identification:</span> {order.transport?.vessel?.id ?? "N/A"}
-            </div>
-            <div>
-              <span className="font-medium">Compagnie de transport:</span> {order.transport?.vessel?.company ?? "N/A"}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Support */}
+      {/* Liste des Produits */}
       <Card>
         <CardHeader>
-          <CardTitle>Support Client</CardTitle>
+          <CardTitle className="text-lg">Produits</CardTitle>
+          <CardDescription>
+            Liste des produits de votre commande
+          </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col md:flex-row items-center gap-4">
-          <Image src="/placeholder.svg" alt="Support Agent" width={64} height={64} className="rounded-full" />
-          <div>
-            <div className="font-medium">Samia Allagui</div>
-            <div className="text-sm text-gray-500">
-              <div>Numéro de Téléphone: +216 99 99 99 99</div>
-              <div>Email: support@cargo.com</div>
-            </div>
-          </div>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Image</TableHead>
+                <TableHead>Produit</TableHead>
+                <TableHead>Catégorie</TableHead>
+                <TableHead>Prix unitaire</TableHead>
+                <TableHead>Poids</TableHead>
+                <TableHead>Dimensions</TableHead>
+                <TableHead>Quantité</TableHead>
+                <TableHead>Fragile</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {order.produits && order.produits.length > 0 ? (
+                order.produits.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>
+                      <div className="relative w-16 h-16 rounded-lg bg-gray-100 overflow-hidden">
+                        <Image
+                          src={product.image || "/placeholder.svg"}
+                          alt={product.nom}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{product.nom}</TableCell>
+                    <TableCell>{product.categorie || "-"}</TableCell>
+                    <TableCell>{`${product.tarifUnitaire.toFixed(
+                      2
+                    )} €`}</TableCell>
+                    <TableCell>{`${product.poids} Kg`}</TableCell>
+                    <TableCell>{`${product.longueur}x${product.largeur}x${product.hauteur}`}</TableCell>
+                    <TableCell>{product.quantite}</TableCell>
+                    <TableCell>
+                      {product.fragile ? (
+                        <Badge variant="destructive">Oui</Badge>
+                      ) : (
+                        <Badge variant="secondary">Non</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={8}
+                    className="text-center text-muted-foreground"
+                  >
+                    Aucun produit
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
-      <div className="flex justify-end">
-        <Button className="bg-green-500 hover:bg-green-600" onClick={handleConfirmReception}>
-          Confirmer la réception
-        </Button>
-      </div>
+      {/* Notes */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Notes</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {order.notes?.map((note, index) => (
+            <div key={index} className="flex items-start gap-2 text-blue-700">
+              <AlertTriangle className="h-5 w-5 shrink-0" />
+              <span>{note}</span>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
-      {/* Product Details Dialog */}
+      {/* Facture */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Facture</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" className="w-full">
+            <FileText className="mr-2 h-4 w-4" />
+            Télécharger la facture
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Support Client */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Support Client</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4">
+            <Image
+              src="/placeholder.svg"
+              alt="Support Agent"
+              width={48}
+              height={48}
+              className="rounded-full"
+            />
+            <div>
+              <div className="font-medium">Sarah Dubois</div>
+              <div className="text-sm text-gray-500">Agent de support</div>
+            </div>
+          </div>
+          <div className="text-sm space-y-1">
+            <div>Email: support@cargo.com</div>
+            <div>Tél: +33 1 23 45 67 89</div>
+          </div>
+          <Button variant="outline" className="w-full">
+            Contacter le support
+          </Button>
+        </CardContent>
+      </Card>
+
       {selectedProduct && (
         <ProductDetailsDialog
           isOpen={!!selectedProduct}
@@ -271,5 +291,5 @@ export function LivreeOrderView({ order }: LivreeOrderViewProps) {
         />
       )}
     </div>
-  )
+  );
 }

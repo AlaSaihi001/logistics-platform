@@ -3,7 +3,10 @@ import { cookies } from "next/headers";
 import { sign } from "jsonwebtoken";
 import { AuthService } from "@/lib/auth-service";
 import { ApiResponse } from "@/lib/api-response";
-import { rateLimiter } from "@/lib/rate-limiter";
+
+export const config = {
+  runtime: 'nodejs', // Switch to Node.js runtime
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,7 +14,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { email, password } = body;
 
-    console.log("Données de la requête : ", { email, password }); // Ajout de log
+    console.log("Données de la requête : ", { email, password });
 
     // Validation
     const errors: Record<string, string> = {};
@@ -26,7 +29,7 @@ export async function POST(req: NextRequest) {
     const result = await AuthService.authenticateUser(email, password);
 
     if (!result.success || !result.user) {
-      console.log("Erreur d'authentification : ", result.error); // Ajout de log pour déboguer l'erreur
+      console.log("Erreur d'authentification : ", result.error);
       return ApiResponse.error(result.error ?? "Identifiants invalides", { status: 401 });
     }
 
@@ -45,6 +48,7 @@ export async function POST(req: NextRequest) {
     );
 
     // Envoi du cookie
+    // In your /app/api/client-auth/login/route.ts file
     cookies().set({
       name: "auth-token",
       value: token,
@@ -55,6 +59,7 @@ export async function POST(req: NextRequest) {
       sameSite: "lax",
     });
 
+
     // Réponse OK
     return ApiResponse.success({ user });
   } catch (error) {
@@ -62,4 +67,3 @@ export async function POST(req: NextRequest) {
     return ApiResponse.serverError("Une erreur est survenue lors de la connexion");
   }
 }
-

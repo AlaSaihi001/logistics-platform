@@ -1,56 +1,67 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Pencil, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { AddNewProduct } from "@/components/add-new-product"
+import type React from "react";
+import { useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { AddNewProduct } from "@/components/add-new-product";
 
-interface Product {
-  id: string
-  image: string | File
-  name: string
-  category: string
-  unitPrice: number
-  weight: number
-  dimensions: {
-    length: number
-    width: number
-    height: number
-  }
-  quantity: number
-  description: string
-  isFragile: boolean
-  packagingType: string
+// Interface corrigée selon Prisma
+interface ProductUI {
+  id: number;
+  nom: string;
+  categorie?: string;
+  tarifUnitaire: number;
+  poids: number;
+  largeur: number;
+  longueur: number;
+  hauteur: number;
+  quantite: number;
+  typeConditionnement: string;
+  fragile: boolean;
+  description?: string;
+  image?: string | File;
+  document?: string;
 }
 
 interface ProductListProps {
-  products: Product[]
-  setProducts: React.Dispatch<React.SetStateAction<Product[]>>
+  products: ProductUI[];
+  setProducts: React.Dispatch<React.SetStateAction<ProductUI[]>>;
 }
 
 export function ProductList({ products, setProducts }: ProductListProps) {
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [editingProduct, setEditingProduct] = useState<ProductUI | null>(null);
 
-  const handleDeleteProduct = (productId: string) => {
-    setProducts((prevProducts) => prevProducts.filter((p) => p.id !== productId))
-  }
+  const handleDeleteProduct = (productId: number) => {
+    setProducts((prevProducts) =>
+      prevProducts.filter((p) => p.id !== productId)
+    );
+  };
 
-  const handleEditProduct = (updatedProduct: Product) => {
-    setProducts((prevProducts) => prevProducts.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)))
-    setEditingProduct(null)
-  }
+  const handleEditProduct = (updatedProduct: ProductUI) => {
+    setProducts((prevProducts) =>
+      prevProducts.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
+    );
+    setEditingProduct(null);
+  };
 
-  const getImageSrc = (image: string | File) => {
+  const getImageSrc = (image?: string | File) => {
+    if (!image) return "/placeholder.svg";
     if (typeof image === "string") {
-      return image
+      return image;
     }
-    // If it's a File object, we can't create an object URL here
-    // Instead, return a placeholder or leave it to the parent component to handle
-    return "/placeholder.svg"
-  }
+    // If it's a File object
+    return "/placeholder.svg";
+  };
 
   return (
     <>
@@ -64,7 +75,7 @@ export function ProductList({ products, setProducts }: ProductListProps) {
             <TableHead>Poids (Kg)</TableHead>
             <TableHead>Dimensions (cm)</TableHead>
             <TableHead>Quantité</TableHead>
-            <TableHead>Type</TableHead>
+            <TableHead>Conditionnement</TableHead>
             <TableHead>Fragile</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -74,29 +85,37 @@ export function ProductList({ products, setProducts }: ProductListProps) {
             <TableRow key={product.id}>
               <TableCell>
                 <img
-                  src={getImageSrc(product.image) || "/placeholder.svg"}
-                  alt={product.name}
+                  src={getImageSrc(product.image)}
+                  alt={product.nom}
                   className="w-10 h-10 object-cover rounded"
                 />
               </TableCell>
-              <TableCell className="font-medium">{product.name}</TableCell>
-              <TableCell>{product.category}</TableCell>
-              <TableCell>{product.unitPrice.toFixed(2)} €</TableCell>
-              <TableCell>{product.weight} Kg</TableCell>
-              <TableCell>{`${product.dimensions.length}x${product.dimensions.width}x${product.dimensions.height}`}</TableCell>
-              <TableCell>{product.quantity}</TableCell>
-              <TableCell>{product.packagingType}</TableCell>
+              <TableCell className="font-medium">{product.nom}</TableCell>
+              <TableCell>{product.categorie || "-"}</TableCell>
+              <TableCell>{product.tarifUnitaire.toFixed(2)} €</TableCell>
+              <TableCell>{product.poids} Kg</TableCell>
+              <TableCell>{`${product.longueur}x${product.largeur}x${product.hauteur}`}</TableCell>
+              <TableCell>{product.quantite}</TableCell>
+              <TableCell>{product.typeConditionnement}</TableCell>
               <TableCell>
-                <Badge variant={product.isFragile ? "destructive" : "secondary"}>
-                  {product.isFragile ? "Oui" : "Non"}
+                <Badge variant={product.fragile ? "destructive" : "secondary"}>
+                  {product.fragile ? "Oui" : "Non"}
                 </Badge>
               </TableCell>
               <TableCell>
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => setEditingProduct(product)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingProduct(product)}
+                  >
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDeleteProduct(product.id)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteProduct(product.id)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -113,5 +132,5 @@ export function ProductList({ products, setProducts }: ProductListProps) {
         initialData={editingProduct}
       />
     </>
-  )
+  );
 }

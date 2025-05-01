@@ -1,32 +1,30 @@
-import type { NextRequest } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import prisma from "@/lib/prisma"
+import type { NextRequest } from "next/server";
+import { getUserFromToken } from "@/lib/jwt-utils";
+import prisma from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getUserFromToken(req);
 
-    if (!session) {
-      return Response.json({ error: "Non autorisé" }, { status: 401 })
+    if (!user) {
+      return Response.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const userId = Number.parseInt(session.user.id)
-    const role = session.user.role
+    const userId = Number.parseInt(user.id);
+    const role = user.role;
 
-    let commandes
+    let commandes;
 
-    // Recommended fix: Add pagination and limit the number of records returned
     if (role === "ASSISTANT") {
-      const page = Number.parseInt(req.nextUrl.searchParams.get("page") || "1")
-      const limit = Number.parseInt(req.nextUrl.searchParams.get("limit") || "20")
-      const skip = (page - 1) * limit
+      const page = Number.parseInt(req.nextUrl.searchParams.get("page") || "1");
+      const limit = Number.parseInt(req.nextUrl.searchParams.get("limit") || "20");
+      const skip = (page - 1) * limit;
 
       commandes = await prisma.commande.findMany({
         where: {
           OR: [
             { assistantId: userId },
-            { assistantId: null }, // Unassigned orders
+            { assistantId: null },
           ],
         },
         include: {
@@ -44,9 +42,8 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: "desc" },
         skip,
         take: limit,
-      })
+      });
     } else if (role === "CLIENT") {
-      // Client can only see their own orders
       commandes = await prisma.commande.findMany({
         where: { clientId: userId },
         include: {
@@ -54,30 +51,33 @@ export async function GET(req: NextRequest) {
           factures: true,
         },
         orderBy: { createdAt: "desc" },
-      })
+      });
     } else {
-      return Response.json({ error: "Rôle non autorisé" }, { status: 403 })
+      return Response.json({ error: "Rôle non autorisé" }, { status: 403 });
     }
 
-    return Response.json(commandes)
+    return Response.json(commandes);
   } catch (error) {
-    console.error("Error fetching orders:", error)
-    return Response.json({ error: "Erreur serveur" }, { status: 500 })
+    console.error("Error fetching orders:", error);
+    return Response.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
-
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await getUserFromToken(req);
 
-    if (!session || session.user.role !== "CLIENT") {
-      return Response.json({ error: "Non autorisé" }, { status: 401 })
+    if (!user || user.role !== "CLIENT") {
+      return Response.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const clientId = Number.parseInt(session.user.id)
-    const body = await req.json()
+    const clientId = Number.parseInt(user.id);
+    const body = await req.json();
 
-    // Create new order
+    // Validation
+    if (!body.produits || body.produits.length === 0) {
+      return Response.json({ error: "Veuillez ajouter au moins un produit" }, { status: 400 });
+    }
+
     const newOrder = await prisma.commande.create({
       data: {
         nom: body.nom,
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
         telephoneDestinataire: Number.parseInt(body.telephoneDestinataire),
         emailDestinataire: body.emailDestinataire,
         statut: "En attente",
-        adresseActuel: body.adresse, // Initially, the current address is the pickup address
+        adresseActuel: body.adresse,
         clientId: clientId,
         produits: {
           create: body.produits.map((produit: any) => ({
@@ -119,9 +119,8 @@ export async function POST(req: NextRequest) {
       include: {
         produits: true,
       },
-    })
+    });
 
-    // Create notification for the client
     await prisma.notification.create({
       data: {
         type: "commande",
@@ -129,11 +128,11 @@ export async function POST(req: NextRequest) {
         lu: false,
         clientId: clientId,
       },
-    })
+    });
 
-    return Response.json(newOrder, { status: 201 })
+    return Response.json(newOrder, { status: 201 });
   } catch (error) {
-    console.error("Error creating order:", error)
-    return Response.json({ error: "Erreur serveur" }, { status: 500 })
+    console.error("Error creating order:", error);
+    return Response.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
