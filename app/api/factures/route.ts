@@ -1,13 +1,14 @@
-import type { NextRequest } from "next/server";
+import { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { getUserFromToken } from "@/lib/jwt-utils";
-import prisma from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   try {
     const user = await getUserFromToken(req);
 
     if (!user) {
-      return Response.json({ error: "Non autorisé" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const userId = Number.parseInt(user.id);
@@ -55,21 +56,22 @@ export async function GET(req: NextRequest) {
         orderBy: { dateEmission: "desc" },
       });
     } else {
-      return Response.json({ error: "Rôle non autorisé" }, { status: 403 });
+      return NextResponse.json({ error: "Rôle non autorisé" }, { status: 403 });
     }
 
-    return Response.json(factures);
+    return NextResponse.json(factures);
   } catch (error) {
     console.error("Error fetching invoices:", error);
-    return Response.json({ error: "Erreur serveur" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
+
 
 export async function POST(req: NextRequest) {
   try {
     const user = await getUserFromToken(req);
 
-    if (!user || user.role !== "ASSISTANT") {
+    if (!user || user.role !== "AGENT") {
       return Response.json({ error: "Non autorisé" }, { status: 401 });
     }
 

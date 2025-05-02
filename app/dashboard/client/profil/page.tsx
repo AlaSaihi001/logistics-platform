@@ -1,37 +1,50 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import {
+  User,
+  Mail,
+  Phone,
+  Camera,
+  Lock,
+  AlertTriangle,
+  RefreshCw,
+} from "lucide-react";
 
-import { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
-import { User, Mail, Phone, Camera, Lock, AlertTriangle, RefreshCw } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { toast } from "@/components/ui/use-toast"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "@/components/ui/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ClientProfile {
-  id: string
-  nom: string
-  prenom: string
-  email: string
-  indicatifPaysTelephone: string
-  telephone: number
-  image: string | null
+  id: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  indicatifPaysTelephone: string;
+  telephone: number;
+  image: string | null;
 }
 
 export default function ProfilePage() {
-  const router = useRouter()
-  const [profile, setProfile] = useState<ClientProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
+  const router = useRouter();
+  const [profile, setProfile] = useState<ClientProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
@@ -39,29 +52,34 @@ export default function ProfilePage() {
     indicatifPaysTelephone: "",
     telephone: "",
     image: "",
-  })
+  });
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
-  })
-  const [activeTab, setActiveTab] = useState("profile")
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
-  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({})
+  });
+  const [activeTab, setActiveTab] = useState("profile");
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>(
+    {}
+  );
 
   const fetchProfile = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
-      const response = await fetch("/api/client/profile")
+      const response = await fetch("/api/client/profile");
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null)
-        throw new Error(errorData?.error || `Erreur lors du chargement du profil (${response.status})`)
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.error ||
+            `Erreur lors du chargement du profil (${response.status})`
+        );
       }
 
-      const data = await response.json()
-      setProfile(data)
+      const data = await response.json();
+      setProfile(data);
       setFormData({
         nom: data.nom,
         prenom: data.prenom,
@@ -69,119 +87,125 @@ export default function ProfilePage() {
         indicatifPaysTelephone: data.indicatifPaysTelephone,
         telephone: data.telephone.toString(),
         image: data.image || "",
-      })
+      });
     } catch (error) {
-      console.error("Error fetching profile:", error)
-      setError(error instanceof Error ? error.message : "Une erreur s'est produite lors du chargement du profil")
+      console.error("Error fetching profile:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Une erreur s'est produite lors du chargement du profil"
+      );
       toast({
         title: "Erreur",
         description: "Impossible de charger votre profil",
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    fetchProfile()
-  }, [fetchProfile])
+    fetchProfile();
+  }, [fetchProfile]);
 
   const validateProfileForm = () => {
-    const errors: Record<string, string> = {}
+    const errors: Record<string, string> = {};
 
     if (!formData.nom.trim()) {
-      errors.nom = "Le nom est requis"
+      errors.nom = "Le nom est requis";
     }
 
     if (!formData.prenom.trim()) {
-      errors.prenom = "Le prénom est requis"
+      errors.prenom = "Le prénom est requis";
     }
 
     if (!formData.email.trim()) {
-      errors.email = "L'email est requis"
+      errors.email = "L'email est requis";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = "L'email n'est pas valide"
+      errors.email = "L'email n'est pas valide";
     }
 
     if (!formData.indicatifPaysTelephone.trim()) {
-      errors.indicatifPaysTelephone = "L'indicatif est requis"
+      errors.indicatifPaysTelephone = "L'indicatif est requis";
     }
 
     if (!formData.telephone.trim()) {
-      errors.telephone = "Le numéro de téléphone est requis"
+      errors.telephone = "Le numéro de téléphone est requis";
     } else if (!/^\d+$/.test(formData.telephone)) {
-      errors.telephone = "Le numéro de téléphone doit contenir uniquement des chiffres"
+      errors.telephone =
+        "Le numéro de téléphone doit contenir uniquement des chiffres";
     }
 
-    setFormErrors(errors)
-    return Object.keys(errors).length === 0
-  }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const validatePasswordForm = () => {
-    const errors: Record<string, string> = {}
+    const errors: Record<string, string> = {};
 
     if (!passwordData.currentPassword) {
-      errors.currentPassword = "Le mot de passe actuel est requis"
+      errors.currentPassword = "Le mot de passe actuel est requis";
     }
 
     if (!passwordData.newPassword) {
-      errors.newPassword = "Le nouveau mot de passe est requis"
+      errors.newPassword = "Le nouveau mot de passe est requis";
     } else if (passwordData.newPassword.length < 8) {
-      errors.newPassword = "Le mot de passe doit contenir au moins 8 caractères"
+      errors.newPassword =
+        "Le mot de passe doit contenir au moins 8 caractères";
     }
 
     if (!passwordData.confirmPassword) {
-      errors.confirmPassword = "La confirmation du mot de passe est requise"
+      errors.confirmPassword = "La confirmation du mot de passe est requise";
     } else if (passwordData.newPassword !== passwordData.confirmPassword) {
-      errors.confirmPassword = "Les mots de passe ne correspondent pas"
+      errors.confirmPassword = "Les mots de passe ne correspondent pas";
     }
 
-    setPasswordErrors(errors)
-    return Object.keys(errors).length === 0
-  }
+    setPasswordErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
     // Clear error when user types
     if (formErrors[name]) {
       setFormErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[name]
-        return newErrors
-      })
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
-  }
+  };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setPasswordData((prev) => ({ ...prev, [name]: value }))
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({ ...prev, [name]: value }));
 
     // Clear error when user types
     if (passwordErrors[name]) {
       setPasswordErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[name]
-        return newErrors
-      })
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateProfileForm()) {
       toast({
         title: "Erreur de validation",
         description: "Veuillez corriger les erreurs dans le formulaire",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
-    setSaving(true)
+    setSaving(true);
 
     try {
       const response = await fetch("/api/client/profile", {
@@ -190,45 +214,51 @@ export default function ProfilePage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null)
-        throw new Error(errorData?.error || `Erreur lors de la mise à jour du profil (${response.status})`)
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.error ||
+            `Erreur lors de la mise à jour du profil (${response.status})`
+        );
       }
 
-      const updatedProfile = await response.json()
-      setProfile(updatedProfile)
+      const updatedProfile = await response.json();
+      setProfile(updatedProfile);
 
       toast({
         title: "Profil mis à jour",
         description: "Vos informations ont été mises à jour avec succès",
-      })
+      });
     } catch (error) {
-      console.error("Error updating profile:", error)
+      console.error("Error updating profile:", error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de mettre à jour votre profil",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Impossible de mettre à jour votre profil",
         variant: "destructive",
-      })
+      });
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validatePasswordForm()) {
       toast({
         title: "Erreur de validation",
         description: "Veuillez corriger les erreurs dans le formulaire",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
-    setSaving(true)
+    setSaving(true);
 
     try {
       const response = await fetch("/api/client/password", {
@@ -240,35 +270,41 @@ export default function ProfilePage() {
           currentPassword: passwordData.currentPassword,
           newPassword: passwordData.newPassword,
         }),
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null)
-        throw new Error(errorData?.error || `Erreur lors de la mise à jour du mot de passe (${response.status})`)
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.error ||
+            `Erreur lors de la mise à jour du mot de passe (${response.status})`
+        );
       }
 
       toast({
         title: "Mot de passe mis à jour",
         description: "Votre mot de passe a été mis à jour avec succès",
-      })
+      });
 
       // Reset password fields
       setPasswordData({
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
-      })
+      });
     } catch (error) {
-      console.error("Error updating password:", error)
+      console.error("Error updating password:", error);
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de mettre à jour votre mot de passe",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Impossible de mettre à jour votre mot de passe",
         variant: "destructive",
-      })
+      });
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -276,7 +312,7 @@ export default function ProfilePage() {
         <Skeleton className="h-12 w-1/3" />
         <Skeleton className="h-[600px] w-full" />
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -297,17 +333,23 @@ export default function ProfilePage() {
           Retour
         </Button>
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Profil</h1>
-        <p className="text-muted-foreground">Gérez vos informations personnelles et vos préférences</p>
+        <p className="text-muted-foreground">
+          Gérez vos informations personnelles et vos préférences
+        </p>
       </div>
 
-      <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab}>
+      <Tabs
+        defaultValue="profile"
+        value={activeTab}
+        onValueChange={setActiveTab}
+      >
         <TabsList>
           <TabsTrigger value="profile">Informations personnelles</TabsTrigger>
           <TabsTrigger value="security">Sécurité</TabsTrigger>
@@ -319,7 +361,9 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Informations personnelles</CardTitle>
-                  <CardDescription>Mettez à jour vos informations personnelles</CardDescription>
+                  <CardDescription>
+                    Mettez à jour vos informations personnelles
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center space-x-4">
@@ -345,7 +389,9 @@ export default function ProfilePage() {
                     </div>
                     <div>
                       <h3 className="text-lg font-medium">Photo de profil</h3>
-                      <p className="text-sm text-muted-foreground">Cette photo sera affichée sur votre profil</p>
+                      <p className="text-sm text-muted-foreground">
+                        Cette photo sera affichée sur votre profil
+                      </p>
                     </div>
                   </div>
 
@@ -360,11 +406,17 @@ export default function ProfilePage() {
                           name="prenom"
                           value={formData.prenom}
                           onChange={handleChange}
-                          className={`pl-10 ${formErrors.prenom ? "border-red-500" : ""}`}
+                          className={`pl-10 ${
+                            formErrors.prenom ? "border-red-500" : ""
+                          }`}
                         />
                         <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                       </div>
-                      {formErrors.prenom && <p className="text-sm text-red-500">{formErrors.prenom}</p>}
+                      {formErrors.prenom && (
+                        <p className="text-sm text-red-500">
+                          {formErrors.prenom}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="nom">Nom</Label>
@@ -374,11 +426,15 @@ export default function ProfilePage() {
                           name="nom"
                           value={formData.nom}
                           onChange={handleChange}
-                          className={`pl-10 ${formErrors.nom ? "border-red-500" : ""}`}
+                          className={`pl-10 ${
+                            formErrors.nom ? "border-red-500" : ""
+                          }`}
                         />
                         <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                       </div>
-                      {formErrors.nom && <p className="text-sm text-red-500">{formErrors.nom}</p>}
+                      {formErrors.nom && (
+                        <p className="text-sm text-red-500">{formErrors.nom}</p>
+                      )}
                     </div>
                   </div>
 
@@ -391,11 +447,15 @@ export default function ProfilePage() {
                         type="email"
                         value={formData.email}
                         onChange={handleChange}
-                        className={`pl-10 ${formErrors.email ? "border-red-500" : ""}`}
+                        className={`pl-10 ${
+                          formErrors.email ? "border-red-500" : ""
+                        }`}
                       />
                       <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                     </div>
-                    {formErrors.email && <p className="text-sm text-red-500">{formErrors.email}</p>}
+                    {formErrors.email && (
+                      <p className="text-sm text-red-500">{formErrors.email}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -407,7 +467,11 @@ export default function ProfilePage() {
                           name="indicatifPaysTelephone"
                           value={formData.indicatifPaysTelephone}
                           onChange={handleChange}
-                          className={`pl-10 rounded-r-none ${formErrors.indicatifPaysTelephone ? "border-red-500" : ""}`}
+                          className={`pl-10 rounded-r-none ${
+                            formErrors.indicatifPaysTelephone
+                              ? "border-red-500"
+                              : ""
+                          }`}
                         />
                         <Phone className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                       </div>
@@ -416,22 +480,32 @@ export default function ProfilePage() {
                         name="telephone"
                         value={formData.telephone}
                         onChange={handleChange}
-                        className={`flex-1 rounded-l-none ${formErrors.telephone ? "border-red-500" : ""}`}
+                        className={`flex-1 rounded-l-none ${
+                          formErrors.telephone ? "border-red-500" : ""
+                        }`}
                       />
                     </div>
-                    {(formErrors.indicatifPaysTelephone || formErrors.telephone) && (
+                    {(formErrors.indicatifPaysTelephone ||
+                      formErrors.telephone) && (
                       <p className="text-sm text-red-500">
-                        {formErrors.indicatifPaysTelephone || formErrors.telephone}
+                        {formErrors.indicatifPaysTelephone ||
+                          formErrors.telephone}
                       </p>
                     )}
                   </div>
                 </CardContent>
                 <CardFooter className="flex justify-between">
-                  <Button variant="outline" type="button" onClick={() => router.back()}>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => router.back()}
+                  >
                     Annuler
                   </Button>
                   <Button type="submit" disabled={saving}>
-                    {saving ? "Enregistrement..." : "Enregistrer les modifications"}
+                    {saving
+                      ? "Enregistrement..."
+                      : "Enregistrer les modifications"}
                   </Button>
                 </CardFooter>
               </Card>
@@ -445,7 +519,9 @@ export default function ProfilePage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Sécurité</CardTitle>
-                  <CardDescription>Mettez à jour votre mot de passe</CardDescription>
+                  <CardDescription>
+                    Mettez à jour votre mot de passe
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
@@ -457,12 +533,16 @@ export default function ProfilePage() {
                         type="password"
                         value={passwordData.currentPassword}
                         onChange={handlePasswordChange}
-                        className={`pl-10 ${passwordErrors.currentPassword ? "border-red-500" : ""}`}
+                        className={`pl-10 ${
+                          passwordErrors.currentPassword ? "border-red-500" : ""
+                        }`}
                       />
                       <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                     </div>
                     {passwordErrors.currentPassword && (
-                      <p className="text-sm text-red-500">{passwordErrors.currentPassword}</p>
+                      <p className="text-sm text-red-500">
+                        {passwordErrors.currentPassword}
+                      </p>
                     )}
                   </div>
 
@@ -475,12 +555,16 @@ export default function ProfilePage() {
                         type="password"
                         value={passwordData.newPassword}
                         onChange={handlePasswordChange}
-                        className={`pl-10 ${passwordErrors.newPassword ? "border-red-500" : ""}`}
+                        className={`pl-10 ${
+                          passwordErrors.newPassword ? "border-red-500" : ""
+                        }`}
                       />
                       <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                     </div>
                     {passwordErrors.newPassword ? (
-                      <p className="text-sm text-red-500">{passwordErrors.newPassword}</p>
+                      <p className="text-sm text-red-500">
+                        {passwordErrors.newPassword}
+                      </p>
                     ) : (
                       <p className="text-sm text-muted-foreground">
                         Le mot de passe doit contenir au moins 8 caractères
@@ -489,7 +573,9 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                    <Label htmlFor="confirmPassword">
+                      Confirmer le mot de passe
+                    </Label>
                     <div className="relative">
                       <Input
                         id="confirmPassword"
@@ -497,21 +583,31 @@ export default function ProfilePage() {
                         type="password"
                         value={passwordData.confirmPassword}
                         onChange={handlePasswordChange}
-                        className={`pl-10 ${passwordErrors.confirmPassword ? "border-red-500" : ""}`}
+                        className={`pl-10 ${
+                          passwordErrors.confirmPassword ? "border-red-500" : ""
+                        }`}
                       />
                       <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                     </div>
                     {passwordErrors.confirmPassword && (
-                      <p className="text-sm text-red-500">{passwordErrors.confirmPassword}</p>
+                      <p className="text-sm text-red-500">
+                        {passwordErrors.confirmPassword}
+                      </p>
                     )}
                   </div>
                 </CardContent>
                 <CardFooter className="flex justify-between">
-                  <Button variant="outline" type="button" onClick={() => setActiveTab("profile")}>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => setActiveTab("profile")}
+                  >
                     Retour
                   </Button>
                   <Button type="submit" disabled={saving}>
-                    {saving ? "Mise à jour..." : "Mettre à jour le mot de passe"}
+                    {saving
+                      ? "Mise à jour..."
+                      : "Mettre à jour le mot de passe"}
                   </Button>
                 </CardFooter>
               </Card>
@@ -520,5 +616,5 @@ export default function ProfilePage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

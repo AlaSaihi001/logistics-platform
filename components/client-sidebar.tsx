@@ -3,7 +3,7 @@
 import type React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Package, CreditCard, MessageSquare, Settings } from "lucide-react"
+import { Home, Package, CreditCard, MessageSquare, Settings, User } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -40,9 +40,9 @@ const sidebarLinks: SidebarLink[] = [
     roles: ["client", "entreprise", "transporteur"],
   },
   {
-    icon: <Settings className="h-5 w-5" />,
-    label: "Paramètres",
-    href: "/dashboard/client/settings",
+    icon: <User className="h-5 w-5" />,
+    label: "Profile",
+    href: "/dashboard/client/profil",
     roles: ["client", "entreprise", "transporteur", "admin"],
   },
 ]

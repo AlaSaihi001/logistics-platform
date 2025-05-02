@@ -8,6 +8,7 @@ import {
   Clock,
   XCircle,
   AlertTriangle,
+  Archive,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -178,6 +179,15 @@ export default function ClientDashboard({ clientId }: ClientDashboardProps) {
             className="bg-red-100 text-red-800 border-red-200"
           >
             <XCircle className="mr-1 h-3 w-3" /> Annulé
+          </Badge>
+        );
+      case "Archivée":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-[#f3f4f6] text-[#1f2937] border-[#e5e7eb]"
+          >
+            <Archive className="mr-1 h-3 w-3" /> Archivée
           </Badge>
         );
       default:

@@ -12,14 +12,19 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     const userId = Number.parseInt(user.id);
     const role = user.role;
-    const factureId = Number.parseInt(params.id);
+    const factureId = Number.parseInt(params.id);  // Assurez-vous que l'ID de la facture est défini
+
+    if (!factureId) {
+      return Response.json({ error: "ID de facture invalide" }, { status: 400 });
+    }
 
     let facture;
 
+    // Si l'utilisateur est un client, on filtre par l'ID du client
     if (role === "CLIENT") {
       facture = await prisma.facture.findFirst({
         where: {
-          id: factureId,
+          id: factureId, // Utilisation correcte de l'ID de la facture
           idClient: userId,
         },
         include: {
@@ -32,9 +37,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         },
       });
     } else if (role === "ASSISTANT") {
+      // Si l'utilisateur est un assistant, on permet d'accéder à toutes les factures
       facture = await prisma.facture.findUnique({
         where: {
-          id: factureId,
+          id: factureId, // Recherche de la facture par ID
         },
         include: {
           commande: {
@@ -63,7 +69,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return Response.json({ error: "Facture non trouvée" }, { status: 404 });
     }
 
-    return Response.json(facture);
+    return Response.json(facture); // Retour de la facture avec les données pertinentes
   } catch (error) {
     console.error("Error fetching invoice:", error);
     return Response.json({ error: "Erreur serveur" }, { status: 500 });

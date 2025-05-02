@@ -1,19 +1,35 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Bell, HelpCircle, Menu, Package } from "lucide-react"
-import { useState } from "react"
-
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { ClientSidebar } from "@/components/client-sidebar"
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
+import Link from "next/link";
+import { Bell, HelpCircle, Menu, Package } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ClientSidebar } from "@/components/client-sidebar";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 // Ajouter l'import pour ThemeToggle
-import { ThemeToggle } from "@/components/theme-toggle"
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function ClientNavbar() {
-  const [notificationCount, setNotificationCount] = useState(3)
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  useEffect(() => {
+    const fetchNotificationCount = async () => {
+      try {
+        const response = await fetch("/api/client/notifications/count");
+        if (!response.ok) {
+          throw new Error("Erreur lors de la récupération des notifications");
+        }
+        const data = await response.json();
+        setNotificationCount(data.count || 0); // Assuming the response has a "count" property
+      } catch (error) {
+        console.error("Error fetching notification count:", error);
+      }
+    };
+
+    fetchNotificationCount();
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 flex h-16 items-center border-b bg-background px-4 md:px-6">
@@ -53,7 +69,7 @@ export function ClientNavbar() {
               <Badge
                 variant="destructive"
                 className={cn(
-                  "absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs",
+                  "absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs"
                 )}
               >
                 {notificationCount}
@@ -71,5 +87,5 @@ export function ClientNavbar() {
         </Link>
       </div>
     </header>
-  )
+  );
 }
