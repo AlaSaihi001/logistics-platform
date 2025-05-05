@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { Alert } from "@/components/ui/alert"
+import { Alert } from "@/components/ui/alert";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Users,
   CreditCard,
@@ -16,14 +16,20 @@ import {
   Headphones,
   FileText,
   Package,
-} from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { DateRangePicker } from "@/components/date-range-picker"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useAuthSession } from "@/hooks/use-auth-session"
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { DateRangePicker } from "@/components/date-range-picker";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 // Données pour les tableaux
 const recentOrders = [
@@ -62,7 +68,7 @@ const recentOrders = [
     montant: "1,890.00 €",
     statut: "livree",
   },
-]
+];
 
 const recentTransactions = [
   {
@@ -110,7 +116,7 @@ const recentTransactions = [
     modePaiement: "Virement bancaire",
     statut: "complete",
   },
-]
+];
 
 const recentUsers = [
   {
@@ -158,7 +164,7 @@ const recentUsers = [
     type: "agent",
     statut: "actif",
   },
-]
+];
 
 const paymentMethods = [
   {
@@ -196,143 +202,188 @@ const paymentMethods = [
     frais: "0%",
     statut: "inactif",
   },
-]
+];
 
 // Fonction pour obtenir le badge de statut
 const getStatusBadge = (status: string) => {
   switch (status) {
     case "en-attente":
       return (
-        <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-100">
+        <Badge
+          variant="outline"
+          className="bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-100"
+        >
           <Clock className="mr-1 h-3 w-3" /> En attente
         </Badge>
-      )
+      );
     case "en-cours":
       return (
-        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100">
+        <Badge
+          variant="outline"
+          className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100"
+        >
           <Truck className="mr-1 h-3 w-3" /> En cours
         </Badge>
-      )
+      );
     case "livree":
       return (
-        <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
+        <Badge
+          variant="outline"
+          className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100"
+        >
           <CheckCircle className="mr-1 h-3 w-3" /> Livrée
         </Badge>
-      )
+      );
     case "annulee":
       return (
-        <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100">
+        <Badge
+          variant="outline"
+          className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100"
+        >
           <XCircle className="mr-1 h-3 w-3" /> Annulée
         </Badge>
-      )
+      );
     default:
-      return <Badge>{status}</Badge>
+      return <Badge>{status}</Badge>;
   }
-}
+};
 
 // Fonction pour obtenir le badge de statut de transaction
 const getTransactionStatusBadge = (status: string) => {
   switch (status) {
     case "complete":
       return (
-        <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
+        <Badge
+          variant="outline"
+          className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100"
+        >
           <CheckCircle className="mr-1 h-3 w-3" /> Complétée
         </Badge>
-      )
+      );
     case "pending":
       return (
-        <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-100">
+        <Badge
+          variant="outline"
+          className="bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-100"
+        >
           <Clock className="mr-1 h-3 w-3" /> En attente
         </Badge>
-      )
+      );
     case "failed":
       return (
-        <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100">
+        <Badge
+          variant="outline"
+          className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100"
+        >
           <XCircle className="mr-1 h-3 w-3" /> Échouée
         </Badge>
-      )
+      );
     default:
-      return <Badge>{status}</Badge>
+      return <Badge>{status}</Badge>;
   }
-}
+};
 
 // Fonction pour obtenir le badge de type d'utilisateur
 const getUserTypeBadge = (type: string) => {
   switch (type) {
     case "client":
       return (
-        <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100">
+        <Badge
+          variant="outline"
+          className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100"
+        >
           <Users className="mr-1 h-3 w-3" /> Client
         </Badge>
-      )
+      );
     case "agent":
       return (
-        <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-100">
+        <Badge
+          variant="outline"
+          className="bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-100"
+        >
           <Truck className="mr-1 h-3 w-3" /> Agent
         </Badge>
-      )
+      );
     case "assistant":
       return (
-        <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">
+        <Badge
+          variant="outline"
+          className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100"
+        >
           <Headphones className="mr-1 h-3 w-3" /> Assistant
         </Badge>
-      )
+      );
     case "admin":
       return (
-        <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100">
+        <Badge
+          variant="outline"
+          className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100"
+        >
           <ShieldAlert className="mr-1 h-3 w-3" /> Admin
         </Badge>
-      )
+      );
     default:
-      return <Badge>{type}</Badge>
+      return <Badge>{type}</Badge>;
   }
-}
+};
 
 // Fonction pour obtenir le badge de statut d'utilisateur
 const getUserStatusBadge = (status: string) => {
   switch (status) {
     case "actif":
       return (
-        <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
+        <Badge
+          variant="outline"
+          className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100"
+        >
           <CheckCircle className="mr-1 h-3 w-3" /> Actif
         </Badge>
-      )
+      );
     case "inactif":
       return (
-        <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100">
+        <Badge
+          variant="outline"
+          className="bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100"
+        >
           <XCircle className="mr-1 h-3 w-3" /> Inactif
         </Badge>
-      )
+      );
     default:
-      return <Badge>{status}</Badge>
+      return <Badge>{status}</Badge>;
   }
-}
+};
 
 // Fonction pour obtenir le badge de statut de méthode de paiement
 const getPaymentMethodStatusBadge = (status: string) => {
   switch (status) {
     case "actif":
       return (
-        <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
+        <Badge
+          variant="outline"
+          className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100"
+        >
           <CheckCircle className="mr-1 h-3 w-3" /> Actif
         </Badge>
-      )
+      );
     case "inactif":
       return (
-        <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100">
+        <Badge
+          variant="outline"
+          className="bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100"
+        >
           <XCircle className="mr-1 h-3 w-3" /> Inactif
         </Badge>
-      )
+      );
     default:
-      return <Badge>{status}</Badge>
+      return <Badge>{status}</Badge>;
   }
-}
+};
 
 export default function AdminDashboardPage() {
-  const router = useRouter()
-  const { requireAuth } = useAuthSession()
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const router = useRouter();
+  const { requireAuth } = useAuthSession();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState({
     totalUsers: 0,
     totalOrders: 0,
@@ -340,51 +391,53 @@ export default function AdminDashboardPage() {
     pendingOrders: 0,
     pendingPayments: 0,
     openTickets: 0,
-  })
+  });
 
   // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
-      const isAuthorized = await requireAuth(["ADMIN"])
+      const isAuthorized = await requireAuth(["ADMIN"]);
       if (!isAuthorized) {
-        router.push("/auth/login")
+        router.push("/auth/login");
       }
-    }
+    };
 
-    checkAuth()
-  }, [requireAuth, router])
+    checkAuth();
+  }, [requireAuth, router]);
 
   // Fetch dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        setIsLoading(true)
-        setError(null)
+        setIsLoading(true);
+        setError(null);
 
-        const response = await fetch("/api/admin/dashboard/stats")
+        const response = await fetch("/api/admin/dashboard/stats");
 
         if (!response.ok) {
-          throw new Error("Erreur lors du chargement des données du tableau de bord")
+          throw new Error(
+            "Erreur lors du chargement des données du tableau de bord"
+          );
         }
 
-        const data = await response.json()
-        setDashboardData(data)
+        const data = await response.json();
+        setDashboardData(data);
       } catch (error) {
-        console.error("Error fetching dashboard data:", error)
-        setError("Impossible de charger les données du tableau de bord")
+        console.error("Error fetching dashboard data:", error);
+        setError("Impossible de charger les données du tableau de bord");
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchDashboardData()
-  }, [])
+    fetchDashboardData();
+  }, []);
 
   // Handle date range change
   const handleDateRangeChange = async (dateRange: { from: Date; to: Date }) => {
     try {
-      setIsLoading(true)
-      setError(null)
+      setIsLoading(true);
+      setError(null);
 
       const response = await fetch("/api/admin/dashboard/stats", {
         method: "POST",
@@ -395,27 +448,34 @@ export default function AdminDashboardPage() {
           from: dateRange.from.toISOString(),
           to: dateRange.to.toISOString(),
         }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error("Erreur lors du chargement des données du tableau de bord")
+        throw new Error(
+          "Erreur lors du chargement des données du tableau de bord"
+        );
       }
 
-      const data = await response.json()
-      setDashboardData(data)
+      const data = await response.json();
+      setDashboardData(data);
     } catch (error) {
-      console.error("Error fetching dashboard data with date range:", error)
-      setError("Impossible de charger les données du tableau de bord")
+      console.error("Error fetching dashboard data with date range:", error);
+      setError("Impossible de charger les données du tableau de bord");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h1 className="text-3xl font-bold tracking-tight">Tableau de bord administrateur</h1>
-        <DateRangePicker onChange={handleDateRangeChange} />
+        <h1 className="text-3xl font-bold tracking-tight">
+          Tableau de bord administrateur
+        </h1>
+        <DateRangePicker
+          value={"yourDateRange"}
+          onChange={handleDateRangeChange}
+        />{" "}
       </div>
 
       {error && (
@@ -437,16 +497,22 @@ export default function AdminDashboardPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Utilisateurs</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Utilisateurs
+                </CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 {isLoading ? (
                   <Skeleton className="h-8 w-[100px]" />
                 ) : (
-                  <div className="text-2xl font-bold">{dashboardData.totalUsers}</div>
+                  <div className="text-2xl font-bold">
+                    {dashboardData.totalUsers}
+                  </div>
                 )}
-                <p className="text-xs text-muted-foreground">Total des utilisateurs enregistrés</p>
+                <p className="text-xs text-muted-foreground">
+                  Total des utilisateurs enregistrés
+                </p>
               </CardContent>
             </Card>
             <Card>
@@ -458,10 +524,14 @@ export default function AdminDashboardPage() {
                 {isLoading ? (
                   <Skeleton className="h-8 w-[100px]" />
                 ) : (
-                  <div className="text-2xl font-bold">{dashboardData.totalOrders}</div>
+                  <div className="text-2xl font-bold">
+                    {dashboardData.totalOrders}
+                  </div>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  <span className="text-green-500">{dashboardData.pendingOrders} en attente</span>
+                  <span className="text-green-500">
+                    {dashboardData.pendingOrders} en attente
+                  </span>
                 </p>
               </CardContent>
             </Card>
@@ -474,25 +544,35 @@ export default function AdminDashboardPage() {
                 {isLoading ? (
                   <Skeleton className="h-8 w-[100px]" />
                 ) : (
-                  <div className="text-2xl font-bold">{dashboardData.totalRevenue.toFixed(2)} DT</div>
+                  <div className="text-2xl font-bold">
+                    {dashboardData.totalRevenue.toFixed(2)} DT
+                  </div>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  <span className="text-amber-500">{dashboardData.pendingPayments} paiements en attente</span>
+                  <span className="text-amber-500">
+                    {dashboardData.pendingPayments} paiements en attente
+                  </span>
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Réclamations</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Réclamations
+                </CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 {isLoading ? (
                   <Skeleton className="h-8 w-[100px]" />
                 ) : (
-                  <div className="text-2xl font-bold">{dashboardData.openTickets}</div>
+                  <div className="text-2xl font-bold">
+                    {dashboardData.openTickets}
+                  </div>
                 )}
-                <p className="text-xs text-muted-foreground">Réclamations ouvertes</p>
+                <p className="text-xs text-muted-foreground">
+                  Réclamations ouvertes
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -500,14 +580,18 @@ export default function AdminDashboardPage() {
             <Card className="col-span-4">
               <CardHeader>
                 <CardTitle>Vue d'ensemble des revenus</CardTitle>
-                <CardDescription>Revenus mensuels pour l'année en cours</CardDescription>
+                <CardDescription>
+                  Revenus mensuels pour l'année en cours
+                </CardDescription>
               </CardHeader>
               <CardContent className="pl-2">
                 {isLoading ? (
                   <Skeleton className="h-[200px] w-full" />
                 ) : (
                   <div className="h-[200px] w-full bg-muted rounded-md flex items-center justify-center">
-                    <p className="text-muted-foreground">Graphique des revenus</p>
+                    <p className="text-muted-foreground">
+                      Graphique des revenus
+                    </p>
                   </div>
                 )}
               </CardContent>
@@ -528,7 +612,9 @@ export default function AdminDashboardPage() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <p className="text-center text-muted-foreground">Liste des commandes récentes</p>
+                    <p className="text-center text-muted-foreground">
+                      Liste des commandes récentes
+                    </p>
                   </div>
                 )}
               </CardContent>
@@ -539,11 +625,15 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle>Analytiques</CardTitle>
-              <CardDescription>Statistiques détaillées de la plateforme</CardDescription>
+              <CardDescription>
+                Statistiques détaillées de la plateforme
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[400px] w-full bg-muted rounded-md flex items-center justify-center">
-                <p className="text-muted-foreground">Graphiques d'analytiques</p>
+                <p className="text-muted-foreground">
+                  Graphiques d'analytiques
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -552,11 +642,15 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle>Rapports</CardTitle>
-              <CardDescription>Rapports générés pour la période sélectionnée</CardDescription>
+              <CardDescription>
+                Rapports générés pour la période sélectionnée
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[400px] w-full bg-muted rounded-md flex items-center justify-center">
-                <p className="text-muted-foreground">Liste des rapports disponibles</p>
+                <p className="text-muted-foreground">
+                  Liste des rapports disponibles
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -565,7 +659,9 @@ export default function AdminDashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle>Notifications</CardTitle>
-              <CardDescription>Notifications système et alertes</CardDescription>
+              <CardDescription>
+                Notifications système et alertes
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[400px] w-full bg-muted rounded-md flex items-center justify-center">
@@ -576,5 +672,5 @@ export default function AdminDashboardPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

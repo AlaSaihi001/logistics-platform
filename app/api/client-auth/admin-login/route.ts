@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Vérification du mot de passe
-    const match = await compare(password, admin.motDePasse);
+    const match = password === admin.motDePasse;
     if (!match) {
       return ApiResponse.error("Identifiants invalides", { status: 401 });
     }

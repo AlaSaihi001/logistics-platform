@@ -1,10 +1,10 @@
-import type { ReactNode } from "react"
-import { AdminSidebar } from "@/components/admin-sidebar"
-import { DashboardHeader } from "@/components/dashboard-header"
-import { Toaster } from "@/components/ui/use-toast"
+import type { ReactNode } from "react";
+import { AdminSidebar } from "@/components/admin-sidebar";
+import { DashboardHeader } from "@/components/dashboard-header";
+import { Toaster } from "@/components/ui/use-toast";
 
 interface AdminLayoutProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
@@ -19,5 +19,5 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       </div>
       <Toaster />
     </div>
-  )
+  );
 }
