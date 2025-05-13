@@ -1,8 +1,4 @@
-/*
-  Warnings:
-
-  - You are about to alter the column `documents` on the `reclamation` table. The data in that column could be lost. The data in that column will be cast from `VarChar(191)` to `Json`.
-
-*/
--- AlterTable
-ALTER TABLE `reclamation` MODIFY `documents` JSON NULL;
+ALTER TABLE Client ADD COLUMN active BOOLEAN DEFAULT TRUE;
+ALTER TABLE Assistant ADD COLUMN active BOOLEAN DEFAULT TRUE;
+ALTER TABLE Agent ADD COLUMN active BOOLEAN DEFAULT TRUE;
+ALTER TABLE Administrateur ADD COLUMN active BOOLEAN DEFAULT TRUE;

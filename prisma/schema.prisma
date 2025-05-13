@@ -213,6 +213,8 @@ model Document {
   updatedAt DateTime @updatedAt
 }
 
+/////////////////////////////////////////////////////////////////////
+
 // Add LogisticsIncident model
 model LogisticsIncident {
   id          String    @id @default(cuid())

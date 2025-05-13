@@ -72,13 +72,15 @@ export default function LoginPage() {
   };
 
   // Handle login and redirect
-  // useEffect(() => {
-  //   if (user?.id) {
-  //     const redirectTo = searchParams.get("redirectTo") || "/dashboard/client";
-  //     console.log("Redirecting to:", redirectTo);
-  //     router.push(redirectTo);
-  //   }
-  // }, [user, searchParams, router]);
+  useEffect(() => {
+    if (user?.id) {
+      const redirectTo = searchParams.get("redirectTo") || "/dashboard/client";
+      console.log("Redirecting to:", redirectTo);
+      router.push(redirectTo);
+    }
+  }, [user, searchParams, router]);
+
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSuccessMessage(null);

@@ -1,384 +1,32 @@
 "use client";
 
-import { Alert } from "@/components/ui/alert";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DateRangePicker } from "@/components/date-range-picker";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
   Users,
   CreditCard,
-  AlertTriangle,
-  Truck,
+  Package,
+  FileText,
   CheckCircle,
   Clock,
   XCircle,
-  ShieldAlert,
-  Headphones,
-  FileText,
-  Package,
+  AlertTriangle,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { DateRangePicker } from "@/components/date-range-picker";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthSession } from "@/hooks/use-auth-session";
 
-// Données pour les tableaux
-const recentOrders = [
-  {
-    id: "ORD-2023-1234",
-    client: "TechGlobal",
-    date: "15/03/2023",
-    montant: "1,250.00 €",
-    statut: "en-attente",
-  },
-  {
-    id: "ORD-2023-1233",
-    client: "MediPharma",
-    date: "14/03/2023",
-    montant: "2,780.00 €",
-    statut: "en-cours",
-  },
-  {
-    id: "ORD-2023-1232",
-    client: "FashionRetail",
-    date: "13/03/2023",
-    montant: "3,450.00 €",
-    statut: "livree",
-  },
-  {
-    id: "ORD-2023-1231",
-    client: "AutoParts",
-    date: "12/03/2023",
-    montant: "2,150.00 €",
-    statut: "annulee",
-  },
-  {
-    id: "ORD-2023-1230",
-    client: "HomeDecor",
-    date: "11/03/2023",
-    montant: "1,890.00 €",
-    statut: "livree",
-  },
-];
-
-const recentTransactions = [
-  {
-    id: "TRX-2023-001",
-    client: "TechGlobal",
-    facture: "FAC-2023-056",
-    montant: "1,250.00 €",
-    date: "15/03/2023",
-    modePaiement: "Carte bancaire",
-    statut: "complete",
-  },
-  {
-    id: "TRX-2023-002",
-    client: "MediPharma",
-    facture: "FAC-2023-057",
-    montant: "2,780.00 €",
-    date: "16/03/2023",
-    modePaiement: "Virement bancaire",
-    statut: "pending",
-  },
-  {
-    id: "TRX-2023-003",
-    client: "FashionRetail",
-    facture: "FAC-2023-055",
-    montant: "3,450.00 €",
-    date: "14/03/2023",
-    modePaiement: "PayPal",
-    statut: "complete",
-  },
-  {
-    id: "TRX-2023-004",
-    client: "AutoParts",
-    facture: "FAC-2023-054",
-    montant: "2,150.00 €",
-    date: "12/03/2023",
-    modePaiement: "Carte bancaire",
-    statut: "failed",
-  },
-  {
-    id: "TRX-2023-005",
-    client: "HomeDecor",
-    facture: "FAC-2023-053",
-    montant: "1,890.00 €",
-    date: "10/03/2023",
-    modePaiement: "Virement bancaire",
-    statut: "complete",
-  },
-];
-
-const recentUsers = [
-  {
-    id: "USR-2023-456",
-    nom: "Karim Benzidi",
-    email: "karim.b@example.com",
-    telephone: "+212 612 345 678",
-    date: "15/03/2023",
-    type: "client",
-    statut: "actif",
-  },
-  {
-    id: "USR-2023-455",
-    nom: "Leila Hadid",
-    email: "leila.h@example.com",
-    telephone: "+212 623 456 789",
-    date: "14/03/2023",
-    type: "agent",
-    statut: "actif",
-  },
-  {
-    id: "USR-2023-454",
-    nom: "Mehdi Alaoui",
-    email: "mehdi.a@example.com",
-    telephone: "+212 634 567 890",
-    date: "13/03/2023",
-    type: "client",
-    statut: "actif",
-  },
-  {
-    id: "USR-2023-453",
-    nom: "Samira Tazi",
-    email: "samira.t@example.com",
-    telephone: "+212 645 678 901",
-    date: "12/03/2023",
-    type: "client",
-    statut: "inactif",
-  },
-  {
-    id: "USR-2023-452",
-    nom: "Youssef Berrada",
-    email: "youssef.b@example.com",
-    telephone: "+212 656 789 012",
-    date: "11/03/2023",
-    type: "agent",
-    statut: "actif",
-  },
-];
-
-const paymentMethods = [
-  {
-    id: "PM-001",
-    nom: "Carte bancaire",
-    description: "Paiement par carte Visa, Mastercard, etc.",
-    frais: "2.5%",
-    statut: "actif",
-  },
-  {
-    id: "PM-002",
-    nom: "Virement bancaire",
-    description: "Paiement par virement SEPA ou international",
-    frais: "0.5%",
-    statut: "actif",
-  },
-  {
-    id: "PM-003",
-    nom: "PayPal",
-    description: "Paiement via compte PayPal",
-    frais: "3.5%",
-    statut: "actif",
-  },
-  {
-    id: "PM-004",
-    nom: "Espèces",
-    description: "Paiement en espèces à la livraison",
-    frais: "0%",
-    statut: "inactif",
-  },
-  {
-    id: "PM-005",
-    nom: "Chèque",
-    description: "Paiement par chèque bancaire",
-    frais: "0%",
-    statut: "inactif",
-  },
-];
-
-// Fonction pour obtenir le badge de statut
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case "en-attente":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-100"
-        >
-          <Clock className="mr-1 h-3 w-3" /> En attente
-        </Badge>
-      );
-    case "en-cours":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100"
-        >
-          <Truck className="mr-1 h-3 w-3" /> En cours
-        </Badge>
-      );
-    case "livree":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100"
-        >
-          <CheckCircle className="mr-1 h-3 w-3" /> Livrée
-        </Badge>
-      );
-    case "annulee":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100"
-        >
-          <XCircle className="mr-1 h-3 w-3" /> Annulée
-        </Badge>
-      );
-    default:
-      return <Badge>{status}</Badge>;
-  }
-};
-
-// Fonction pour obtenir le badge de statut de transaction
-const getTransactionStatusBadge = (status: string) => {
-  switch (status) {
-    case "complete":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100"
-        >
-          <CheckCircle className="mr-1 h-3 w-3" /> Complétée
-        </Badge>
-      );
-    case "pending":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-100"
-        >
-          <Clock className="mr-1 h-3 w-3" /> En attente
-        </Badge>
-      );
-    case "failed":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100"
-        >
-          <XCircle className="mr-1 h-3 w-3" /> Échouée
-        </Badge>
-      );
-    default:
-      return <Badge>{status}</Badge>;
-  }
-};
-
-// Fonction pour obtenir le badge de type d'utilisateur
-const getUserTypeBadge = (type: string) => {
-  switch (type) {
-    case "client":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100"
-        >
-          <Users className="mr-1 h-3 w-3" /> Client
-        </Badge>
-      );
-    case "agent":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-100"
-        >
-          <Truck className="mr-1 h-3 w-3" /> Agent
-        </Badge>
-      );
-    case "assistant":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100"
-        >
-          <Headphones className="mr-1 h-3 w-3" /> Assistant
-        </Badge>
-      );
-    case "admin":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100"
-        >
-          <ShieldAlert className="mr-1 h-3 w-3" /> Admin
-        </Badge>
-      );
-    default:
-      return <Badge>{type}</Badge>;
-  }
-};
-
-// Fonction pour obtenir le badge de statut d'utilisateur
-const getUserStatusBadge = (status: string) => {
-  switch (status) {
-    case "actif":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100"
-        >
-          <CheckCircle className="mr-1 h-3 w-3" /> Actif
-        </Badge>
-      );
-    case "inactif":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100"
-        >
-          <XCircle className="mr-1 h-3 w-3" /> Inactif
-        </Badge>
-      );
-    default:
-      return <Badge>{status}</Badge>;
-  }
-};
-
-// Fonction pour obtenir le badge de statut de méthode de paiement
-const getPaymentMethodStatusBadge = (status: string) => {
-  switch (status) {
-    case "actif":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100"
-        >
-          <CheckCircle className="mr-1 h-3 w-3" /> Actif
-        </Badge>
-      );
-    case "inactif":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100"
-        >
-          <XCircle className="mr-1 h-3 w-3" /> Inactif
-        </Badge>
-      );
-    default:
-      return <Badge>{status}</Badge>;
-  }
-};
-
+// Active API integration for fetching dashboard data
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { requireAuth } = useAuthSession();
@@ -401,7 +49,6 @@ export default function AdminDashboardPage() {
         router.push("/auth/login");
       }
     };
-
     checkAuth();
   }, [requireAuth, router]);
 
@@ -415,15 +62,13 @@ export default function AdminDashboardPage() {
         const response = await fetch("/api/admin/dashboard/stats");
 
         if (!response.ok) {
-          throw new Error(
-            "Erreur lors du chargement des données du tableau de bord"
-          );
+          throw new Error("Erreur lors du chargement des données");
         }
 
         const data = await response.json();
         setDashboardData(data);
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
+        console.error("Erreur de récupération des données:", error);
         setError("Impossible de charger les données du tableau de bord");
       } finally {
         setIsLoading(false);
@@ -451,15 +96,16 @@ export default function AdminDashboardPage() {
       });
 
       if (!response.ok) {
-        throw new Error(
-          "Erreur lors du chargement des données du tableau de bord"
-        );
+        throw new Error("Erreur lors du chargement des données");
       }
 
       const data = await response.json();
       setDashboardData(data);
     } catch (error) {
-      console.error("Error fetching dashboard data with date range:", error);
+      console.error(
+        "Erreur de récupération des données avec la plage de dates:",
+        error
+      );
       setError("Impossible de charger les données du tableau de bord");
     } finally {
       setIsLoading(false);
@@ -473,9 +119,9 @@ export default function AdminDashboardPage() {
           Tableau de bord administrateur
         </h1>
         <DateRangePicker
-          value={"yourDateRange"}
+          value={["2023-01-01", "2023-12-31"]}
           onChange={handleDateRangeChange}
-        />{" "}
+        />
       </div>
 
       {error && (
@@ -493,10 +139,12 @@ export default function AdminDashboardPage() {
           <TabsTrigger value="reports">Rapports</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
+
+        {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader>
                 <CardTitle className="text-sm font-medium">
                   Utilisateurs
                 </CardTitle>
@@ -515,8 +163,9 @@ export default function AdminDashboardPage() {
                 </p>
               </CardContent>
             </Card>
+
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader>
                 <CardTitle className="text-sm font-medium">Commandes</CardTitle>
                 <Package className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
@@ -535,8 +184,9 @@ export default function AdminDashboardPage() {
                 </p>
               </CardContent>
             </Card>
+
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader>
                 <CardTitle className="text-sm font-medium">Revenus</CardTitle>
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
@@ -555,8 +205,9 @@ export default function AdminDashboardPage() {
                 </p>
               </CardContent>
             </Card>
+
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader>
                 <CardTitle className="text-sm font-medium">
                   Réclamations
                 </CardTitle>
@@ -576,6 +227,8 @@ export default function AdminDashboardPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Revenus et Commandes récentes */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="col-span-4">
               <CardHeader>
@@ -596,6 +249,7 @@ export default function AdminDashboardPage() {
                 )}
               </CardContent>
             </Card>
+
             <Card className="col-span-3">
               <CardHeader>
                 <CardTitle>Commandes récentes</CardTitle>
@@ -621,6 +275,8 @@ export default function AdminDashboardPage() {
             </Card>
           </div>
         </TabsContent>
+
+        {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-4">
           <Card>
             <CardHeader>
@@ -638,6 +294,8 @@ export default function AdminDashboardPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Reports Tab */}
         <TabsContent value="reports" className="space-y-4">
           <Card>
             <CardHeader>
@@ -655,6 +313,8 @@ export default function AdminDashboardPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Notifications Tab */}
         <TabsContent value="notifications" className="space-y-4">
           <Card>
             <CardHeader>

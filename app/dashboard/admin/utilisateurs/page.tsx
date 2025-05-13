@@ -1,298 +1,309 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import {
+  Search,
+  Filter,
+  Download,
+  Plus,
+  MoreHorizontal,
+  User,
+  Truck,
+  ShieldAlert,
+  CheckCircle,
+  XCircle,
+  Phone,
+  Headphones,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertTriangle, Plus, Search, Download, RefreshCw } from "lucide-react"
-import { useAuthSession } from "@/hooks/use-auth-session"
+// Définir un type pour l'utilisateur
+interface User {
+  id: string;
+  nom: string;
+  email: string;
+  telephone: string;
+  type: string;
+  dateInscription: string;
+  statut: string;
+  image?: string;
+}
 
-export default function AdminUsersPage() {
-  const router = useRouter()
-  const { requireAuth } = useAuthSession()
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [users, setUsers] = useState([])
-  const [filteredUsers, setFilteredUsers] = useState([])
-  const [activeTab, setActiveTab] = useState("all")
+export default function UtilisateursPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [users, setUsers] = useState<User[]>([]);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Check authentication
-  useEffect(() => {
-    const checkAuth = async () => {
-      const isAuthorized = await requireAuth(["ADMIN"])
-      if (!isAuthorized) {
-        router.push("/auth/login")
-      }
-    }
-
-    checkAuth()
-  }, [requireAuth, router])
-
-  // Fetch users data
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
-
-        const response = await fetch("/api/admin/users")
-
-        if (!response.ok) {
-          throw new Error("Erreur lors du chargement des utilisateurs")
-        }
-
-        const data = await response.json()
-        setUsers(data)
-        setFilteredUsers(data)
-      } catch (error) {
-        console.error("Error fetching users:", error)
-        setError("Impossible de charger les utilisateurs")
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchUsers()
-  }, [])
-
-  // Filter users based on search query and active tab
-  useEffect(() => {
-    if (!users.length) return
-
-    let filtered = users
-
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(
-        (user: any) =>
-          user.nom.toLowerCase().includes(query) ||
-          user.prenom.toLowerCase().includes(query) ||
-          user.email.toLowerCase().includes(query),
-      )
-    }
-
-    // Filter by role
-    if (activeTab !== "all") {
-      filtered = filtered.filter((user: any) => user.role.toLowerCase() === activeTab)
-    }
-
-    setFilteredUsers(filtered)
-  }, [searchQuery, activeTab, users])
-
-  // Handle tab change
-  const handleTabChange = (value: string) => {
-    setActiveTab(value)
-  }
-
-  // Handle search
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-  }
-
-  // Handle refresh
-  const handleRefresh = async () => {
+  // Récupérer les utilisateurs avec les filtres
+  const fetchUsers = async (page = 1) => {
     try {
-      setIsLoading(true)
-      setError(null)
+      setIsLoading(true);
+      setError(null);
 
-      const response = await fetch("/api/admin/users")
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(pagination.limit),
+        type: typeFilter === "all" ? "" : typeFilter,
+      });
+
+      const response = await fetch(`/api/admin/users?${params.toString()}`);
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error("Erreur lors du chargement des utilisateurs")
+        throw new Error(
+          data.error || "Erreur lors du chargement des utilisateurs"
+        );
       }
 
-      const data = await response.json()
-      setUsers(data)
-      setFilteredUsers(data)
+      setUsers(data.users);
+      setPagination(data.pagination);
     } catch (error) {
-      console.error("Error refreshing users:", error)
-      setError("Impossible de recharger les utilisateurs")
+      setError("Impossible de charger les utilisateurs");
+      console.error("Erreur de récupération des utilisateurs:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  // Handle export
-  const handleExport = async () => {
-    try {
-      const response = await fetch("/api/admin/users/export")
+  // Récupérer les utilisateurs lorsque les filtres ou la page changent
+  useEffect(() => {
+    fetchUsers(pagination.page);
+  }, [pagination.page, typeFilter]);
 
-      if (!response.ok) {
-        throw new Error("Erreur lors de l'exportation des utilisateurs")
-      }
+  // Filtrer les utilisateurs en fonction du terme de recherche
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      user.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.telephone.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = "utilisateurs.csv"
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-    } catch (error) {
-      console.error("Error exporting users:", error)
-      setError("Impossible d'exporter les utilisateurs")
-    }
-  }
+    const matchesType = typeFilter === "all" || user.type === typeFilter;
+
+    return matchesSearch && matchesType;
+  });
+
+  // Gérer le changement de page
+  const handlePageChange = (page: number) => {
+    setPagination((prev) => ({ ...prev, page }));
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h1 className="text-3xl font-bold tracking-tight">Gestion des utilisateurs</h1>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={handleRefresh}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleExport}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Gestion des Utilisateurs
+          </h1>
+          <p className="text-muted-foreground">
+            Gérez tous les utilisateurs de la plateforme
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" className="gap-2">
             <Download className="h-4 w-4" />
+            <span>Exporter</span>
           </Button>
-          <Button asChild>
+          <Button className="gap-2" asChild>
             <Link href="/dashboard/admin/utilisateurs/ajouter">
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter un utilisateur
+              <Plus className="h-4 w-4" />
+              <span>Ajouter un utilisateur</span>
             </Link>
           </Button>
         </div>
       </div>
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Erreur</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
       <Card>
         <CardHeader>
-          <CardTitle>Utilisateurs</CardTitle>
-          <CardDescription>Gérez les utilisateurs de la plateforme</CardDescription>
+          <CardTitle>Liste des utilisateurs</CardTitle>
+          <CardDescription>
+            Consultez et gérez tous les utilisateurs de la plateforme
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher un utilisateur..."
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={handleSearch}
-                />
-              </div>
+          <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
+            <div className="flex gap-2 w-full md:w-auto">
+              <Input
+                placeholder="Rechercher par ID, nom, email ou téléphone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full md:w-[300px]"
+              />
+              <Button variant="outline" size="icon">
+                <Search className="h-4 w-4" />
+                <span className="sr-only">Rechercher</span>
+              </Button>
             </div>
+            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Type d'utilisateur" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les types</SelectItem>
+                  <SelectItem value="client">Client</SelectItem>
+                  <SelectItem value="agent">Agent</SelectItem>
+                  <SelectItem value="assistant">Assistant</SelectItem>
+                  <SelectItem value="admin">Administrateur</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="icon">
+                <Filter className="h-4 w-4" />
+                <span className="sr-only">Filtrer</span>
+              </Button>
+            </div>
+          </div>
 
-            <Tabs defaultValue="all" onValueChange={handleTabChange}>
-              <TabsList>
-                <TabsTrigger value="all">Tous</TabsTrigger>
-                <TabsTrigger value="client">Clients</TabsTrigger>
-                <TabsTrigger value="agent">Agents</TabsTrigger>
-                <TabsTrigger value="assistant">Assistants</TabsTrigger>
-                <TabsTrigger value="admin">Administrateurs</TabsTrigger>
-              </TabsList>
-              <TabsContent value="all" className="mt-4">
-                {isLoading ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-10 w-full" />
-                    {Array(5)
-                      .fill(0)
-                      .map((_, i) => (
-                        <Skeleton key={i} className="h-16 w-full" />
-                      ))}
-                  </div>
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">ID</TableHead>
+                  <TableHead>Utilisateur</TableHead>
+                  <TableHead className="hidden md:table-cell">Email</TableHead>
+                  <TableHead>Téléphone</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Date d'inscription
+                  </TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center h-24">
+                      Aucun utilisateur trouvé
+                    </TableCell>
+                  </TableRow>
                 ) : (
-                  <div className="rounded-md border">
-                    <div className="h-[400px] w-full bg-muted rounded-md flex items-center justify-center">
-                      <p className="text-muted-foreground">Tableau des utilisateurs</p>
-                    </div>
-                  </div>
+                  filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>{user.id}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage
+                              src={`/placeholder.svg?height=32&width=32`}
+                              alt={user.nom}
+                            />
+                            <AvatarFallback>
+                              {user.nom.split(" ")[0][0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          {user.nom}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {user.email}
+                      </TableCell>
+                      <TableCell>{user.telephone}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{user.type}</Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {user.dateInscription}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Actions</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem>
+                              <Link
+                                href={`/dashboard/admin/utilisateurs/${user.id}`}
+                              >
+                                Voir détails
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>Modifier</DropdownMenuItem>
+                            <DropdownMenuItem>Supprimer</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
-              </TabsContent>
-              <TabsContent value="client" className="mt-4">
-                {isLoading ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-10 w-full" />
-                    {Array(5)
-                      .fill(0)
-                      .map((_, i) => (
-                        <Skeleton key={i} className="h-16 w-full" />
-                      ))}
-                  </div>
-                ) : (
-                  <div className="rounded-md border">
-                    <div className="h-[400px] w-full bg-muted rounded-md flex items-center justify-center">
-                      <p className="text-muted-foreground">Tableau des clients</p>
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-              <TabsContent value="agent" className="mt-4">
-                {isLoading ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-10 w-full" />
-                    {Array(5)
-                      .fill(0)
-                      .map((_, i) => (
-                        <Skeleton key={i} className="h-16 w-full" />
-                      ))}
-                  </div>
-                ) : (
-                  <div className="rounded-md border">
-                    <div className="h-[400px] w-full bg-muted rounded-md flex items-center justify-center">
-                      <p className="text-muted-foreground">Tableau des agents</p>
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-              <TabsContent value="assistant" className="mt-4">
-                {isLoading ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-10 w-full" />
-                    {Array(5)
-                      .fill(0)
-                      .map((_, i) => (
-                        <Skeleton key={i} className="h-16 w-full" />
-                      ))}
-                  </div>
-                ) : (
-                  <div className="rounded-md border">
-                    <div className="h-[400px] w-full bg-muted rounded-md flex items-center justify-center">
-                      <p className="text-muted-foreground">Tableau des assistants</p>
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-              <TabsContent value="admin" className="mt-4">
-                {isLoading ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-10 w-full" />
-                    {Array(5)
-                      .fill(0)
-                      .map((_, i) => (
-                        <Skeleton key={i} className="h-16 w-full" />
-                      ))}
-                  </div>
-                ) : (
-                  <div className="rounded-md border">
-                    <div className="h-[400px] w-full bg-muted rounded-md flex items-center justify-center">
-                      <p className="text-muted-foreground">Tableau des administrateurs</p>
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
+        <CardFooter className="flex justify-between">
+          <div className="text-sm text-muted-foreground">
+            Affichage de {filteredUsers.length} utilisateurs sur{" "}
+            {pagination.total}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pagination.page === 1}
+              onClick={() => handlePageChange(pagination.page - 1)}
+            >
+              Précédent
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={
+                pagination.page ===
+                Math.ceil(pagination.total / pagination.limit)
+              }
+              onClick={() => handlePageChange(pagination.page + 1)}
+            >
+              Suivant
+            </Button>
+          </div>
+        </CardFooter>
       </Card>
     </div>
-  )
+  );
 }
