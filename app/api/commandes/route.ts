@@ -17,15 +17,14 @@ export async function GET(req: NextRequest) {
 
     if (role === "ASSISTANT") {
       const page = Number.parseInt(req.nextUrl.searchParams.get("page") || "1");
-      const limit = Number.parseInt(req.nextUrl.searchParams.get("limit") || "20");
+      const limit = Number.parseInt(
+        req.nextUrl.searchParams.get("limit") || "20"
+      );
       const skip = (page - 1) * limit;
 
       commandes = await prisma.commande.findMany({
         where: {
-          OR: [
-            { assistantId: userId },
-            { assistantId: null },
-          ],
+          OR: [{ assistantId: userId }, { assistantId: null }],
         },
         include: {
           produits: true,
@@ -72,10 +71,13 @@ export async function POST(req: NextRequest) {
 
     const clientId = Number.parseInt(user.id);
     const body = await req.json();
-
+    console.log(body);
     // Validation
     if (!body.produits || body.produits.length === 0) {
-      return Response.json({ error: "Veuillez ajouter au moins un produit" }, { status: 400 });
+      return Response.json(
+        { error: "Veuillez ajouter au moins un produit" },
+        { status: 400 }
+      );
     }
 
     const newOrder = await prisma.commande.create({
@@ -97,7 +99,10 @@ export async function POST(req: NextRequest) {
         emailDestinataire: body.emailDestinataire,
         statut: "En attente",
         adresseActuel: body.adresse,
+        dateArrivage: "test",
         clientId: clientId,
+        assistantId: 112,
+        notes: {},
         produits: {
           create: body.produits.map((produit: any) => ({
             nom: produit.nom,
@@ -127,6 +132,7 @@ export async function POST(req: NextRequest) {
         correspond: `Votre commande ${newOrder.nom} a été créée avec succès.`,
         lu: false,
         clientId: clientId,
+        assistantId: 112,
       },
     });
 

@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
@@ -15,92 +15,92 @@ import {
   User,
   Loader2,
   RefreshCw,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useToast } from "@/components/ui/use-toast"
-import { useAuthSession } from "@/hooks/use-auth-session"
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface AssistantSidebarProps {
-  className?: string
+  className?: string;
 }
 
 export function AssistantSidebar({ className }: AssistantSidebarProps) {
-  const pathname = usePathname()
-  const { user, isLoading, requireAuth } = useAuthSession()
-  const [isAuthorized, setIsAuthorized] = useState(false)
-  const [authError, setAuthError] = useState<string | null>(null)
+  const pathname = usePathname();
+  const { user, isLoading, requireAuth } = useAuthSession();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [assistantStats, setAssistantStats] = useState({
     pendingOrders: 0,
     pendingInvoices: 0,
     openTickets: 0,
     unreadNotifications: 0,
-  })
-  const [statsLoading, setStatsLoading] = useState(true)
-  const [statsError, setStatsError] = useState<string | null>(null)
-  const { toast } = useToast()
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Check authentication and role
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const authorized = await requireAuth(["ASSISTANT"])
-        setIsAuthorized(authorized)
-        setAuthError(null)
+        const authorized = await requireAuth(["ASSISTANT"]);
+        setIsAuthorized(authorized);
+        setAuthError(null);
       } catch (error) {
-        console.error("Authentication error:", error)
-        setAuthError("Erreur d'authentification. Veuillez vous reconnecter.")
-        setIsAuthorized(false)
+        console.error("Authentication error:", error);
+        setAuthError("Erreur d'authentification. Veuillez vous reconnecter.");
+        setIsAuthorized(false);
       }
-    }
+    };
 
-    checkAuth()
-  }, [requireAuth])
+    checkAuth();
+  }, [requireAuth]);
 
   // Fetch assistant quick stats for sidebar
   useEffect(() => {
     const fetchAssistantStats = async () => {
-      if (!isAuthorized) return
+      if (!isAuthorized) return;
 
       try {
-        setStatsLoading(true)
-        setStatsError(null)
+        setStatsLoading(true);
+        setStatsError(null);
 
         const response = await fetch("/api/assistant/dashboard/quick-stats", {
           headers: {
             "Cache-Control": "no-cache",
           },
-        })
+        });
 
         if (!response.ok) {
-          throw new Error("Erreur lors du chargement des statistiques")
+          throw new Error("Erreur lors du chargement des statistiques");
         }
 
-        const data = await response.json()
+        const data = await response.json();
         setAssistantStats({
           pendingOrders: data.pendingOrders || 0,
           pendingInvoices: data.pendingInvoices || 0,
           openTickets: data.openTickets || 0,
           unreadNotifications: data.unreadNotifications || 0,
-        })
+        });
       } catch (error) {
-        console.error("Error fetching assistant stats:", error)
-        setStatsError("Impossible de charger les statistiques")
+        console.error("Error fetching assistant stats:", error);
+        setStatsError("Impossible de charger les statistiques");
       } finally {
-        setStatsLoading(false)
+        setStatsLoading(false);
       }
-    }
+    };
 
-    fetchAssistantStats()
-  }, [isAuthorized])
+    fetchAssistantStats();
+  }, [isAuthorized]);
 
   // Retry loading stats
   const retryLoadingStats = () => {
-    setStatsLoading(true)
-    setStatsError(null)
+    setStatsLoading(true);
+    setStatsError(null);
 
     fetch("/api/assistant/dashboard/quick-stats", {
       headers: {
@@ -109,9 +109,9 @@ export function AssistantSidebar({ className }: AssistantSidebarProps) {
     })
       .then((response) => {
         if (!response.ok) {
-          throw new Error("Erreur lors du chargement des statistiques")
+          throw new Error("Erreur lors du chargement des statistiques");
         }
-        return response.json()
+        return response.json();
       })
       .then((data) => {
         setAssistantStats({
@@ -119,25 +119,25 @@ export function AssistantSidebar({ className }: AssistantSidebarProps) {
           pendingInvoices: data.pendingInvoices || 0,
           openTickets: data.openTickets || 0,
           unreadNotifications: data.unreadNotifications || 0,
-        })
+        });
         toast({
           title: "Statistiques mises à jour",
           description: "Les statistiques ont été rechargées avec succès",
-        })
+        });
       })
       .catch((error) => {
-        console.error("Error retrying assistant stats:", error)
-        setStatsError("Impossible de charger les statistiques")
+        console.error("Error retrying assistant stats:", error);
+        setStatsError("Impossible de charger les statistiques");
         toast({
           variant: "destructive",
           title: "Erreur",
           description: "Impossible de recharger les statistiques",
-        })
+        });
       })
       .finally(() => {
-        setStatsLoading(false)
-      })
-  }
+        setStatsLoading(false);
+      });
+  };
 
   if (isLoading) {
     return (
@@ -159,7 +159,7 @@ export function AssistantSidebar({ className }: AssistantSidebarProps) {
             ))}
         </div>
       </div>
-    )
+    );
   }
 
   if (authError) {
@@ -175,19 +175,24 @@ export function AssistantSidebar({ className }: AssistantSidebarProps) {
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className={cn("pb-12 w-full", className)}>
       <div className="space-y-4 py-4">
         <div className="px-4 py-2">
-          <h2 className="mb-2 px-2 text-xl font-semibold tracking-tight text-purple-700">Assistant Client</h2>
-          <p className="text-sm text-muted-foreground px-2 mb-6">Gestion des commandes et support client</p>
+          <h2 className="mb-2 px-2 text-xl font-semibold tracking-tight text-purple-700">
+            Assistant Client
+          </h2>
+          <p className="text-sm text-muted-foreground px-2 mb-6">
+            Gestion des commandes et support client
+          </p>
           <div className="space-y-1">
             <Button
               asChild
-              variant={pathname === "/dashboard/assistant" ? "secondary" : "ghost"}
+              variant={
+                pathname === "/dashboard/assistant" ? "secondary" : "ghost"
+              }
               className="w-full justify-start"
             >
               <Link href="/dashboard/assistant">
@@ -197,7 +202,11 @@ export function AssistantSidebar({ className }: AssistantSidebarProps) {
             </Button>
             <Button
               asChild
-              variant={pathname.includes("/dashboard/assistant/commandes") ? "secondary" : "ghost"}
+              variant={
+                pathname.includes("/dashboard/assistant/commandes")
+                  ? "secondary"
+                  : "ghost"
+              }
               className="w-full justify-start"
             >
               <Link href="/dashboard/assistant/commandes">
@@ -212,7 +221,11 @@ export function AssistantSidebar({ className }: AssistantSidebarProps) {
             </Button>
             <Button
               asChild
-              variant={pathname.includes("/dashboard/assistant/factures") ? "secondary" : "ghost"}
+              variant={
+                pathname.includes("/dashboard/assistant/factures")
+                  ? "secondary"
+                  : "ghost"
+              }
               className="w-full justify-start"
             >
               <Link href="/dashboard/assistant/factures">
@@ -227,7 +240,11 @@ export function AssistantSidebar({ className }: AssistantSidebarProps) {
             </Button>
             <Button
               asChild
-              variant={pathname.includes("/dashboard/assistant/support") ? "secondary" : "ghost"}
+              variant={
+                pathname.includes("/dashboard/assistant/support")
+                  ? "secondary"
+                  : "ghost"
+              }
               className="w-full justify-start"
             >
               <Link href="/dashboard/assistant/support">
@@ -242,7 +259,11 @@ export function AssistantSidebar({ className }: AssistantSidebarProps) {
             </Button>
             <Button
               asChild
-              variant={pathname.includes("/dashboard/assistant/notifications") ? "secondary" : "ghost"}
+              variant={
+                pathname.includes("/dashboard/assistant/notifications")
+                  ? "secondary"
+                  : "ghost"
+              }
               className="w-full justify-start"
             >
               <Link href="/dashboard/assistant/notifications">
@@ -262,7 +283,9 @@ export function AssistantSidebar({ className }: AssistantSidebarProps) {
           <div className="px-6 py-2">
             <div className="flex items-center justify-center">
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              <span className="text-xs text-muted-foreground">Chargement des statistiques...</span>
+              <span className="text-xs text-muted-foreground">
+                Chargement des statistiques...
+              </span>
             </div>
           </div>
         )}
@@ -273,7 +296,12 @@ export function AssistantSidebar({ className }: AssistantSidebarProps) {
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription className="text-xs flex items-center justify-between">
                 <span>{statsError}</span>
-                <Button variant="ghost" size="sm" onClick={retryLoadingStats} className="h-6 px-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={retryLoadingStats}
+                  className="h-6 px-2"
+                >
                   <RefreshCw className="h-3 w-3" />
                 </Button>
               </AlertDescription>
@@ -283,21 +311,17 @@ export function AssistantSidebar({ className }: AssistantSidebarProps) {
 
         <Separator className="my-4" />
         <div className="px-4 py-2">
-          <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">Paramètres</h2>
+          <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">
+            Paramètres
+          </h2>
           <div className="space-y-1">
             <Button
               asChild
-              variant={pathname.includes("/dashboard/assistant/parametres") ? "secondary" : "ghost"}
-              className="w-full justify-start"
-            >
-              <Link href="/dashboard/assistant/parametres">
-                <Settings className="mr-2 h-4 w-4" />
-                Paramètres
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant={pathname.includes("/dashboard/assistant/profil") ? "secondary" : "ghost"}
+              variant={
+                pathname.includes("/dashboard/assistant/profil")
+                  ? "secondary"
+                  : "ghost"
+              }
               className="w-full justify-start"
             >
               <Link href="/dashboard/assistant/profil">
@@ -318,6 +342,5 @@ export function AssistantSidebar({ className }: AssistantSidebarProps) {
           </div>
         </div>
       </div>
-    </div>
-  )
+  );
 }

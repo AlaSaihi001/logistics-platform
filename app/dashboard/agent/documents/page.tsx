@@ -1,14 +1,33 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Search, Filter, Download, Upload, File, Plus, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useCallback, useEffect, useState } from "react";
+import { Search, Filter, Download, Upload, File, Plus, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -16,98 +35,259 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuthSession } from "@/hooks/use-auth-session";
+interface Document {
+  id: number;
+  idAgent: number;
+  nom: string;
+  size: number;
+  url: string;
+  type: string;
+  statut: string; // defaults to "À valider"
+  createdAt: string; // or Date, depending on how you parse it
+  updatedAt: string; // or Date
+  commandeId: number;
+}
+interface Client {
+  id: number;
+  nom: string;
+  prenom: string;
+  email: string;
+}
 
-// Données fictives pour les documents
-const documents = [
-  {
-    id: "DOC-2023-001",
-    nom: "Certificat d'origine",
-    type: "pdf",
-    size: "1.2 MB",
-    dateCreation: "15/03/2023",
-  },
-  {
-    id: "DOC-2023-002",
-    nom: "Facture commerciale",
-    type: "pdf",
-    size: "0.8 MB",
-    dateCreation: "14/03/2023",
-  },
-  {
-    id: "DOC-2023-003",
-    nom: "Liste de colisage",
-    type: "xlsx",
-    size: "0.5 MB",
-    dateCreation: "12/03/2023",
-  },
-  {
-    id: "DOC-2023-004",
-    nom: "Certificat sanitaire",
-    type: "pdf",
-    size: "1.5 MB",
-    dateCreation: "10/03/2023",
-  },
-  {
-    id: "DOC-2023-005",
-    nom: "Bon de livraison",
-    type: "docx",
-    size: "0.7 MB",
-    dateCreation: "08/03/2023",
-  },
-]
+interface Commande {
+  id: number;
+  clientId: number;
+  assistantId: number;
+  agentId: number;
+  nom: string;
+  pays: string;
+  adresse: string;
+  dateDePickup: string | Date;
+  dateArrivage: string;
+  valeurMarchandise: number;
+  typeCommande: string;
+  typeTransport: string;
+  ecoterme: string;
+  modePaiement: string;
+  nomDestinataire: string;
+  paysDestinataire: string;
+  adresseDestinataire: string;
+  indicatifTelephoneDestinataire: string;
+  telephoneDestinataire: number;
+  emailDestinataire: string;
+  statut: string;
+  adresseActuel: string;
+  dateCommande: string | Date;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  notes: Record<string, string>; // or `{ [key: string]: string }`
+  client: Client;
+  produits: any[]; // Define a proper Product interface if needed
+}
 
 export default function DocumentsPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [typeFilter, setTypeFilter] = useState("all")
-  const [isAddDocumentDialogOpen, setIsAddDocumentDialogOpen] = useState(false)
-  const [newDocument, setNewDocument] = useState({
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const { isLoading: authLoading, requireAuth } = useAuthSession();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isAddDocumentDialogOpen, setIsAddDocumentDialogOpen] = useState(false);
+  const [documents, setDocuments] = useState<Document[] | null>([]);
+  const [commandes, setCommandes] = useState<Commande[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  // État pour le nouveau document
+  const [newDocument, setNewDocument] = useState<{
+    nom: string;
+    type: string;
+    commandeId: number;
+    fichier: File | null;
+  }>({
     nom: "",
-    type: "pdf",
-    file: null as File | null,
-  })
+    type: "",
+    commandeId: 0,
+    fichier: null,
+  });
+  // Check authentication and role
+  const checkAuthorization = useCallback(async () => {
+    try {
+      setIsAuthorized(await requireAuth(["AGENT"]));
+    } catch (error) {
+      setError("Erreur d'authentification. Veuillez vous reconnecter.");
+      console.error("Authentication error:", error);
+    }
+  }, [requireAuth]);
 
+  useEffect(() => {
+    checkAuthorization();
+  }, [checkAuthorization]);
+  // Fetch commandes data
+  useEffect(() => {
+    const fetchCommandes = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch("/api/agent/commandes");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch orders");
+        }
+
+        const data = await response.json();
+        setCommandes(data);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+        setError(
+          "Une erreur est survenue lors du chargement des commandes. Veuillez réessayer."
+        );
+        toast({
+          variant: "destructive",
+          title: "Erreur de chargement",
+          description: "Impossible de charger les commandes.",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCommandes();
+  }, [toast]);
+  // Fetch document details
+  const fetchDocs = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      console.log("Fetching Documents");
+      const response = await fetch(`/api/agent/documents`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("Fetch response received:", response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error ||
+            "Erreur lors du chargement des détails de la commande"
+        );
+      }
+
+      const data = await response.json();
+      console.log("Documents data received:", data);
+      setDocuments(data);
+    } catch (error) {
+      console.error("Error fetching Documents:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Erreur lors du chargement des détails de Documents"
+      );
+      toast({
+        title: "Erreur",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Impossible de charger les détails de Documents",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthorized, toast]);
+
+  useEffect(() => {
+    fetchDocs();
+  }, [fetchDocs]);
   // Filtrer les documents en fonction des critères
   const filteredDocuments = documents.filter((document) => {
     const matchesSearch =
       document.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      document.id.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesType = typeFilter === "all" || document.type === typeFilter
+      document.id.toString().toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = typeFilter === "all" || document.type === typeFilter;
 
-    return matchesSearch && matchesType
-  })
+    return matchesSearch && matchesType;
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setNewDocument({
-        ...newDocument,
-        file: e.target.files[0],
-      })
+    const { name, value, files } = e.target;
+
+    if (name === "fichier" && files) {
+      setNewDocument((prev) => ({
+        ...prev,
+        fichier: files[0],
+      }));
+    } else {
+      setNewDocument((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
-  }
+  };
 
-  const handleAddDocument = () => {
-    // Ici, vous implémenteriez la logique pour ajouter le document
-    console.log("Document ajouté:", newDocument)
+  const handleAddDocument = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("nom", newDocument.nom);
+      formData.append("type", newDocument.type);
+      if (newDocument.fichier) {
+        formData.append("fichier", newDocument.fichier);
+      } // Must be a File object
 
-    // Réinitialiser le formulaire et fermer la boîte de dialogue
-    setNewDocument({
-      nom: "",
-      type: "pdf",
-      file: null,
-    })
-    setIsAddDocumentDialogOpen(false)
-  }
+      const response = await fetch(
+        `/api/agent/documents/${newDocument.commandeId}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        const newDoc: Document = result;
+
+        // Append the new document to the documents list
+        setDocuments((prevDocs) => [...prevDocs, newDoc]);
+
+        // Reset newDocument state
+        setNewDocument({
+          nom: "",
+          type: "",
+          commandeId: 0,
+          fichier: null,
+        });
+
+        setIsAddDocumentDialogOpen(false);
+      } else {
+        alert(result.error || "Échec de l'ajout du document");
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'ajout du document:", error);
+      alert("Une erreur est survenue lors de l'ajout du document.");
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
-          <p className="text-muted-foreground">Gérez vos documents et fichiers</p>
+          <p className="text-muted-foreground">
+            Gérez vos documents et fichiers
+          </p>
         </div>
-        <Button className="gap-2" onClick={() => setIsAddDocumentDialogOpen(true)}>
+        <Button
+          className="gap-2"
+          onClick={() => setIsAddDocumentDialogOpen(true)}
+        >
           <Plus className="h-4 w-4" />
           Ajouter un document
         </Button>
@@ -116,7 +296,9 @@ export default function DocumentsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Liste des documents</CardTitle>
-          <CardDescription>Consultez et gérez tous vos documents</CardDescription>
+          <CardDescription>
+            Consultez et gérez tous vos documents
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
@@ -143,6 +325,7 @@ export default function DocumentsPage() {
                   <SelectItem value="docx">DOCX</SelectItem>
                   <SelectItem value="xlsx">XLSX</SelectItem>
                   <SelectItem value="jpg">JPG</SelectItem>
+                  <SelectItem value="png">PNG</SelectItem>
                 </SelectContent>
               </Select>
               <Button variant="outline" size="icon">
@@ -160,7 +343,12 @@ export default function DocumentsPage() {
                   <TableHead>Nom</TableHead>
                   <TableHead className="hidden md:table-cell">Type</TableHead>
                   <TableHead className="hidden md:table-cell">Taille</TableHead>
-                  <TableHead className="hidden lg:table-cell">Date de création</TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Date de création
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Commande
+                  </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -174,16 +362,35 @@ export default function DocumentsPage() {
                 ) : (
                   filteredDocuments.map((document) => (
                     <TableRow key={document.id}>
-                      <TableCell className="font-medium">{document.id}</TableCell>
+                      <TableCell className="font-medium">
+                        {document.id}
+                      </TableCell>
                       <TableCell>{document.nom}</TableCell>
-                      <TableCell className="hidden md:table-cell uppercase">{document.type}</TableCell>
-                      <TableCell className="hidden md:table-cell">{document.size}</TableCell>
-                      <TableCell className="hidden lg:table-cell">{document.dateCreation}</TableCell>
+                      <TableCell className="hidden md:table-cell uppercase">
+                        {document.type}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {document.size}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {document.createdAt}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {document.commandeId}
+                      </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="outline" size="sm" className="gap-1">
-                          <Download className="h-4 w-4" />
-                          <span className="hidden sm:inline">Télécharger</span>
-                        </Button>
+                        <a
+                          href={document.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Button variant="outline" size="sm" className="gap-1">
+                            <Download className="h-4 w-4" />
+                            <span className="hidden sm:inline">
+                              Télécharger
+                            </span>
+                          </Button>
+                        </a>
                       </TableCell>
                     </TableRow>
                   ))
@@ -194,11 +401,16 @@ export default function DocumentsPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={isAddDocumentDialogOpen} onOpenChange={setIsAddDocumentDialogOpen}>
+      <Dialog
+        open={isAddDocumentDialogOpen}
+        onOpenChange={setIsAddDocumentDialogOpen}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Ajouter un document</DialogTitle>
-            <DialogDescription>Ajoutez un nouveau document à votre bibliothèque.</DialogDescription>
+            <DialogDescription>
+              Ajoutez un nouveau document à votre bibliothèque.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -206,20 +418,48 @@ export default function DocumentsPage() {
               <Input
                 id="nom"
                 value={newDocument.nom}
-                onChange={(e) => setNewDocument({ ...newDocument, nom: e.target.value })}
+                onChange={(e) =>
+                  setNewDocument({ ...newDocument, nom: e.target.value })
+                }
                 placeholder="Ex: Certificat d'origine, Facture commerciale..."
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="commande">Commande</Label>
+              <Select
+                value={newDocument.commandeId}
+                onValueChange={(value) =>
+                  setNewDocument({ ...newDocument, commandeId: value })
+                }
+              >
+                <SelectTrigger id="commande">
+                  <SelectValue placeholder="Sélectionner une commande" />
+                </SelectTrigger>
 
+                <SelectContent>
+                  {commandes.map((commande) => (
+                    <SelectItem
+                      key={commande.id}
+                      value={commande.id.toString()}
+                    >
+                      Commande #{commande.id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="type">Type de document</Label>
               <Select
                 value={newDocument.type}
-                onValueChange={(value) => setNewDocument({ ...newDocument, type: value })}
+                onValueChange={(value) =>
+                  setNewDocument({ ...newDocument, type: value })
+                }
               >
                 <SelectTrigger id="type">
                   <SelectValue placeholder="Sélectionner un type" />
                 </SelectTrigger>
+
                 <SelectContent>
                   <SelectItem value="pdf">PDF</SelectItem>
                   <SelectItem value="docx">DOCX</SelectItem>
@@ -238,26 +478,38 @@ export default function DocumentsPage() {
                 <p className="mt-2 text-sm text-muted-foreground">
                   Glissez-déposez un fichier ici ou cliquez pour parcourir
                 </p>
-                <Input id="file" type="file" className="hidden" onChange={handleFileChange} />
+                <Input
+                  id="fichier"
+                  name="fichier"
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                  multiple
+                  onChange={handleFileChange}
+                />
                 <Button
                   variant="outline"
                   size="sm"
                   className="mt-4"
-                  onClick={() => document.getElementById("file")?.click()}
+                  onClick={() => document.getElementById("fichier")?.click()}
                 >
                   Parcourir les fichiers
                 </Button>
-                {newDocument.file && (
+                {newDocument.fichier && (
                   <div className="mt-4 flex items-center justify-between p-2 border rounded-md">
                     <div className="flex items-center gap-2">
                       <File className="h-4 w-4" />
-                      <span className="text-sm font-medium">{newDocument.file.name}</span>
+                      <span className="text-sm font-medium">
+                        {newDocument.fichier.name}
+                      </span>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0"
-                      onClick={() => setNewDocument({ ...newDocument, file: null })}
+                      onClick={() =>
+                        setNewDocument({ ...newDocument, fichier: null })
+                      }
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -267,10 +519,17 @@ export default function DocumentsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddDocumentDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsAddDocumentDialogOpen(false)}
+            >
               Annuler
             </Button>
-            <Button onClick={handleAddDocument} disabled={!newDocument.nom || !newDocument.file} className="gap-2">
+            <Button
+              onClick={handleAddDocument}
+              disabled={!newDocument.nom || !newDocument.fichier}
+              className="gap-2"
+            >
               <Plus className="h-4 w-4" />
               Ajouter le document
             </Button>
@@ -278,5 +537,5 @@ export default function DocumentsPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

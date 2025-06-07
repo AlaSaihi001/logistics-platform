@@ -121,11 +121,13 @@ export default function SupportAndClaimsPage() {
       });
 
       if (response.ok) {
+        const newClaimEntry = await response.json();
         toast({
           title: "Réclamation envoyée",
           description:
             "Nous avons bien reçu votre réclamation et nous la traiterons dans les plus brefs délais.",
         });
+        setClaimsHistory((prev) => [...prev, newClaimEntry]);
         // Réinitialiser les champs après soumission
         setClaim({
           claimType: "",

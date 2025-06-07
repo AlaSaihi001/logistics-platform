@@ -148,15 +148,27 @@ export default function ClaimDetailPage() {
               <p>
                 <strong>Documents: </strong>
               </p>
-              <ul>
-                {claim.documents?.map((doc, index) => (
-                  <li key={index}>
-                    <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                      {doc.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              {Array.isArray(claim.documents) && claim.documents.length > 0 ? (
+                <ul>
+                  {claim.documents.map((doc, index) => (
+                    <li key={index}>
+                      <a
+                        href={doc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {doc.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : typeof claim.documents === "string" &&
+                claim.documents.trim() === "" ? (
+                <p>No documents to show</p>
+              ) : (
+                // Optional: handle other cases if documents is an object but not an array
+                <p>No documents to show</p>
+              )}
             </div>
 
             {claim.status !== "résolu" && (

@@ -7,7 +7,11 @@ export class AuthService {
   /**
    * Authentifier un client avec email et mot de passe
    */
-  static async authenticateUser(email: string, password: string, role?: string) {
+  static async authenticateUser(
+    email: string,
+    password: string,
+    role?: string
+  ) {
     try {
       const user = await prisma.client.findUnique({
         where: { email },
@@ -21,7 +25,6 @@ export class AuthService {
           image: true,
         },
       });
-
       if (!user) {
         return { success: false, error: "Identifiants incorrects" };
       }
@@ -35,11 +38,12 @@ export class AuthService {
       }
 
       // Vérifier le mot de passe
-      const isPasswordValid = await compare(password, user.motDePasse);
-      if (!isPasswordValid) {
+      console.log(password, user.motDePasse);
+      const isValid = await compare(password, user.motDePasse);
+      if (!isValid) {
         return { success: false, error: "Mot de passe incorrect" };
       }
-
+      console.log(user);
       return {
         success: true,
         user: {
@@ -69,6 +73,7 @@ export class AuthService {
     prenom: string;
     telephone: string;
     indicatifTelephone: string;
+    adresse: string;
   }) {
     try {
       const existingClient = await prisma.client.findUnique({
@@ -90,6 +95,7 @@ export class AuthService {
           telephone: Number(userData.telephone),
           indicatifPaysTelephone: userData.indicatifTelephone,
           role: "CLIENT",
+          adresse: userData.adresse,
         },
         select: {
           id: true,
@@ -123,7 +129,11 @@ export class AuthService {
   /**
    * Modifier le mot de passe d’un client
    */
-  static async changePassword(userId: number, currentPassword: string, newPassword: string) {
+  static async changePassword(
+    userId: number,
+    currentPassword: string,
+    newPassword: string
+  ) {
     try {
       const user = await prisma.client.findUnique({
         where: { id: userId },

@@ -1,17 +1,25 @@
-"use client"
+"use client";
 
-import type React from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Home, Package, CreditCard, MessageSquare, Settings, User } from "lucide-react"
-
-import { cn } from "@/lib/utils"
+import type React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Home,
+  Package,
+  CreditCard,
+  MessageSquare,
+  Settings,
+  User,
+  LogOut,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface SidebarLink {
-  icon: React.ReactNode
-  label: string
-  href: string
-  roles: string[]
+  icon: React.ReactNode;
+  label: string;
+  href: string;
+  roles: string[];
 }
 
 const sidebarLinks: SidebarLink[] = [
@@ -45,10 +53,10 @@ const sidebarLinks: SidebarLink[] = [
     href: "/dashboard/client/profil",
     roles: ["client", "entreprise", "transporteur", "admin"],
   },
-]
+];
 
 export function ClientSidebar() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <aside className="w-64 flex-col border-r bg-muted/40">
@@ -61,14 +69,24 @@ export function ClientSidebar() {
               "flex items-center gap-3 rounded-lg px-3 py-2 transition-all",
               pathname === link.href
                 ? "bg-muted text-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
             {link.icon}
             {link.label}
           </Link>
         ))}
+        <Button
+          asChild
+          variant="ghost"
+          className="w-full justify-start text-red-500 hover:text-red-500 hover:bg-red-50"
+        >
+          <Link href="/auth/logout">
+            <LogOut className="mr-2 h-4 w-4" />
+            Déconnexion
+          </Link>
+        </Button>
       </nav>
     </aside>
-  )
+  );
 }

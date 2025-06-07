@@ -2,7 +2,10 @@ import type { NextRequest } from "next/server";
 import { getUserFromToken } from "@/lib/jwt-utils";
 import prisma from "@/lib/prisma";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const user = await getUserFromToken(req);
 
@@ -12,10 +15,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     const userId = Number.parseInt(user.id);
     const role = user.role;
-    const factureId = Number.parseInt(params.id);  // Assurez-vous que l'ID de la facture est défini
-
+    const factureId = Number.parseInt(params.id); // Assurez-vous que l'ID de la facture est défini
+    console.log(factureId);
     if (!factureId) {
-      return Response.json({ error: "ID de facture invalide" }, { status: 400 });
+      return Response.json(
+        { error: "ID de facture invalide" },
+        { status: 400 }
+      );
     }
 
     let facture;
@@ -46,19 +52,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
           commande: {
             include: {
               produits: true,
+              client: true,
             },
           },
           paiement: true,
-          client: {
-            select: {
-              id: true,
-              nom: true,
-              prenom: true,
-              email: true,
-              indicatifPaysTelephone: true,
-              telephone: true,
-            },
-          },
+          client: true,
         },
       });
     } else {
@@ -68,7 +66,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     if (!facture) {
       return Response.json({ error: "Facture non trouvée" }, { status: 404 });
     }
-
+    console.log("FAAAAAAAAAAAAACTURE:", facture);
     return Response.json(facture); // Retour de la facture avec les données pertinentes
   } catch (error) {
     console.error("Error fetching invoice:", error);
@@ -76,7 +74,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const user = await getUserFromToken(req);
 

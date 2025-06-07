@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 export async function getAssistantProfile(assistantId: number) {
   try {
@@ -16,11 +16,11 @@ export async function getAssistantProfile(assistantId: number) {
         image: true,
         createdAt: true,
       },
-    })
-    return assistant
+    });
+    return assistant;
   } catch (error) {
-    console.error("Error fetching assistant profile:", error)
-    throw new Error("Failed to fetch assistant profile")
+    console.error("Error fetching assistant profile:", error);
+    throw new Error("Failed to fetch assistant profile");
   }
 }
 
@@ -36,41 +36,45 @@ export async function updateAssistantProfile(assistantId: number, data: any) {
         indicatifPaysTelephone: data.indicatifPaysTelephone,
         image: data.image,
       },
-    })
-    return updatedAssistant
+    });
+    return updatedAssistant;
   } catch (error) {
-    console.error("Error updating assistant profile:", error)
-    throw new Error("Failed to update assistant profile")
+    console.error("Error updating assistant profile:", error);
+    throw new Error("Failed to update assistant profile");
   }
 }
 
-export async function updateAssistantPassword(assistantId: number, currentPassword: string, newPassword: string) {
+export async function updateAssistantPassword(
+  assistantId: number,
+  currentPassword: string,
+  newPassword: string
+) {
   try {
     // First verify current password
     const assistant = await prisma.assistant.findUnique({
       where: { id: assistantId },
       select: { motDePasse: true },
-    })
+    });
 
     if (!assistant) {
-      throw new Error("Assistant not found")
+      throw new Error("Assistant not found");
     }
 
     // In a real app, you would use bcrypt to compare passwords
     if (assistant.motDePasse !== currentPassword) {
-      throw new Error("Current password is incorrect")
+      throw new Error("Current password is incorrect");
     }
 
     // Update password
     const updatedAssistant = await prisma.assistant.update({
       where: { id: assistantId },
       data: { motDePasse: newPassword },
-    })
+    });
 
-    return { success: true }
+    return { success: true };
   } catch (error) {
-    console.error("Error updating assistant password:", error)
-    throw error
+    console.error("Error updating assistant password:", error);
+    throw error;
   }
 }
 
@@ -95,11 +99,11 @@ export async function getAssistantCommandes(assistantId: number) {
         produits: true,
       },
       orderBy: { dateCommande: "desc" },
-    })
-    return commandes
+    });
+    return commandes;
   } catch (error) {
-    console.error("Error fetching assistant commandes:", error)
-    throw new Error("Failed to fetch commandes")
+    console.error("Error fetching assistant commandes:", error);
+    throw new Error("Failed to fetch commandes");
   }
 }
 
@@ -121,41 +125,51 @@ export async function getCommandeDetails(commandeId: number) {
         produits: true,
         factures: true,
       },
-    })
-    return commande
+    });
+    return commande;
   } catch (error) {
-    console.error("Error fetching commande details:", error)
-    throw new Error("Failed to fetch commande details")
+    console.error("Error fetching commande details:", error);
+    throw new Error("Failed to fetch commande details");
   }
 }
 
-export async function validerCommande(commandeId: number, assistantId: number) {
+export async function validerCommande(
+  commandeId: number,
+  assistantId: number,
+  agentId: Number
+) {
   try {
     const updatedCommande = await prisma.commande.update({
       where: { id: commandeId },
       data: {
-        statut: "Validée",
+        statut: "Validée Par Assistant",
         assistantId: assistantId,
+        agentId: agentId,
       },
-    })
-
+    });
     // Create notification for client
     await prisma.notification.create({
       data: {
         clientId: updatedCommande.clientId,
         type: "Commande",
         correspond: `Votre commande ${updatedCommande.nom} a été validée`,
+        agentId: agentId,
+        assistantId: assistantId,
       },
-    })
+    });
 
-    return updatedCommande
+    return updatedCommande;
   } catch (error) {
-    console.error("Error validating commande:", error)
-    throw new Error("Failed to validate commande")
+    console.error("Error validating commande:", error);
+    throw new Error("Failed to validate commande");
   }
 }
 
-export async function rejeterCommande(commandeId: number, assistantId: number, raison: string) {
+export async function rejeterCommande(
+  commandeId: number,
+  assistantId: number,
+  raison: string
+) {
   try {
     const updatedCommande = await prisma.commande.update({
       where: { id: commandeId },
@@ -163,7 +177,7 @@ export async function rejeterCommande(commandeId: number, assistantId: number, r
         statut: "Rejetée",
         assistantId: assistantId,
       },
-    })
+    });
 
     // Create notification for client
     await prisma.notification.create({
@@ -171,13 +185,14 @@ export async function rejeterCommande(commandeId: number, assistantId: number, r
         clientId: updatedCommande.clientId,
         type: "Commande",
         correspond: `Votre commande ${updatedCommande.nom} a été rejetée. Raison: ${raison}`,
+        assistantId: assistantId,
       },
-    })
+    });
 
-    return updatedCommande
+    return updatedCommande;
   } catch (error) {
-    console.error("Error rejecting commande:", error)
-    throw new Error("Failed to reject commande")
+    console.error("Error rejecting commande:", error);
+    throw new Error("Failed to reject commande");
   }
 }
 
@@ -185,8 +200,8 @@ export async function updateCommandeStatus(commandeId: number, status: string) {
   try {
     const updatedCommande = await prisma.commande.update({
       where: { id: commandeId },
-      data: { statut },
-    })
+      data: { statut: status },
+    });
 
     // Create notification for client
     await prisma.notification.create({
@@ -195,12 +210,12 @@ export async function updateCommandeStatus(commandeId: number, status: string) {
         type: "Commande",
         correspond: `Le statut de votre commande ${updatedCommande.nom} a été mis à jour: ${status}`,
       },
-    })
+    });
 
-    return updatedCommande
+    return updatedCommande;
   } catch (error) {
-    console.error("Error updating commande status:", error)
-    throw new Error("Failed to update commande status")
+    console.error("Error updating commande status:", error);
+    throw new Error("Failed to update commande status");
   }
 }
 
@@ -224,11 +239,11 @@ export async function getAssistantFactures(assistantId: number) {
         },
       },
       orderBy: { dateEmission: "desc" },
-    })
-    return factures
+    });
+    return factures;
   } catch (error) {
-    console.error("Error fetching assistant factures:", error)
-    throw new Error("Failed to fetch factures")
+    console.error("Error fetching assistant factures:", error);
+    throw new Error("Failed to fetch factures");
   }
 }
 
@@ -245,11 +260,11 @@ export async function getFactureDetails(factureId: number) {
         },
         paiement: true,
       },
-    })
-    return facture
+    });
+    return facture;
   } catch (error) {
-    console.error("Error fetching facture details:", error)
-    throw new Error("Failed to fetch facture details")
+    console.error("Error fetching facture details:", error);
+    throw new Error("Failed to fetch facture details");
   }
 }
 
@@ -259,7 +274,7 @@ export async function envoyerFactureClient(factureId: number) {
       where: { id: factureId },
       data: { status: "Envoyée" },
       include: { client: true },
-    })
+    });
 
     // Create notification for client
     await prisma.notification.create({
@@ -268,12 +283,12 @@ export async function envoyerFactureClient(factureId: number) {
         type: "Facture",
         correspond: `Une nouvelle facture #${facture.numeroFacture} a été émise pour votre commande`,
       },
-    })
+    });
 
-    return facture
+    return facture;
   } catch (error) {
-    console.error("Error sending facture to client:", error)
-    throw new Error("Failed to send facture to client")
+    console.error("Error sending facture to client:", error);
+    throw new Error("Failed to send facture to client");
   }
 }
 
@@ -296,11 +311,11 @@ export async function getAssistantReclamations(assistantId: number) {
         },
       },
       orderBy: { date: "desc" },
-    })
-    return reclamations
+    });
+    return reclamations;
   } catch (error) {
-    console.error("Error fetching assistant reclamations:", error)
-    throw new Error("Failed to fetch reclamations")
+    console.error("Error fetching assistant reclamations:", error);
+    throw new Error("Failed to fetch reclamations");
   }
 }
 
@@ -320,15 +335,19 @@ export async function getReclamationDetails(reclamationId: number) {
           },
         },
       },
-    })
-    return reclamation
+    });
+    return reclamation;
   } catch (error) {
-    console.error("Error fetching reclamation details:", error)
-    throw new Error("Failed to fetch reclamation details")
+    console.error("Error fetching reclamation details:", error);
+    throw new Error("Failed to fetch reclamation details");
   }
 }
 
-export async function updateReclamationStatus(reclamationId: number, assistantId: number, status: string) {
+export async function updateReclamationStatus(
+  reclamationId: number,
+  assistantId: number,
+  status: string
+) {
   try {
     const updatedReclamation = await prisma.reclamation.update({
       where: { id: reclamationId },
@@ -337,7 +356,7 @@ export async function updateReclamationStatus(reclamationId: number, assistantId
         assistantId,
       },
       include: { client: true },
-    })
+    });
 
     // Create notification for client
     await prisma.notification.create({
@@ -346,25 +365,53 @@ export async function updateReclamationStatus(reclamationId: number, assistantId
         type: "Réclamation",
         correspond: `Le statut de votre réclamation "${updatedReclamation.sujet}" a été mis à jour: ${status}`,
       },
-    })
+    });
 
-    return updatedReclamation
+    return updatedReclamation;
   } catch (error) {
-    console.error("Error updating reclamation status:", error)
-    throw new Error("Failed to update reclamation status")
+    console.error("Error updating reclamation status:", error);
+    throw new Error("Failed to update reclamation status");
   }
 }
+export async function RespondReclamation(
+  reclamationId: number,
+  assistantId: number,
+  response: string
+) {
+  try {
+    const ReponseReclamation = await prisma.reclamation.update({
+      where: { id: reclamationId, assistantId: assistantId },
+      data: {
+        response,
+      },
+      include: { client: true },
+    });
 
+    // Create notification for client
+    await prisma.notification.create({
+      data: {
+        clientId: ReponseReclamation.idClient,
+        type: "Réclamation",
+        correspond: `La Réponse de votre réclamation "${ReponseReclamation.sujet}"`,
+      },
+    });
+
+    return ReponseReclamation;
+  } catch (error) {
+    console.error("Error updating reclamation response:", error);
+    throw new Error("Failed to update reclamation response");
+  }
+}
 export async function getAssistantNotifications(assistantId: number) {
   try {
     const notifications = await prisma.notification.findMany({
       where: { assistantId },
       orderBy: { dateEmission: "desc" },
-    })
-    return notifications
+    });
+    return notifications;
   } catch (error) {
-    console.error("Error fetching assistant notifications:", error)
-    throw new Error("Failed to fetch notifications")
+    console.error("Error fetching assistant notifications:", error);
+    throw new Error("Failed to fetch notifications");
   }
 }
 
@@ -373,10 +420,10 @@ export async function markNotificationAsRead(notificationId: number) {
     const updatedNotification = await prisma.notification.update({
       where: { id: notificationId },
       data: { lu: true },
-    })
-    return updatedNotification
+    });
+    return updatedNotification;
   } catch (error) {
-    console.error("Error marking notification as read:", error)
-    throw new Error("Failed to mark notification as read")
+    console.error("Error marking notification as read:", error);
+    throw new Error("Failed to mark notification as read");
   }
 }

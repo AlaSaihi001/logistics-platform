@@ -2,7 +2,10 @@ import type { NextRequest } from "next/server";
 import { getUserFromToken } from "@/lib/jwt-utils"; // Function to get user from JWT token
 import prisma from "@/lib/prisma";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const user = await getUserFromToken(req);
 
@@ -48,12 +51,16 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }
 
     if (!reclamation) {
-      return Response.json({ error: "Réclamation non trouvée" }, { status: 404 });
+      return Response.json(
+        { error: "Réclamation non trouvée" },
+        { status: 404 }
+      );
     }
 
     // Parse documents if they exist
     if (reclamation.documents) {
-      reclamation.documents = JSON.parse(reclamation.documents as string);
+      // reclamation.documents = JSON.parse(reclamation.documents as string);
+      reclamation.documents = "";
     }
 
     return Response.json(reclamation);
@@ -65,7 +72,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 // PUT method to update the claim (e.g., change status)
 // PUT method to update the claim (e.g., change status)
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const user = await getUserFromToken(req);
 
@@ -86,7 +96,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     });
 
     if (!reclamation) {
-      return Response.json({ error: "Réclamation non trouvée" }, { status: 404 });
+      return Response.json(
+        { error: "Réclamation non trouvée" },
+        { status: 404 }
+      );
     }
 
     // Ensure that a client can only update their own claims

@@ -20,12 +20,14 @@ async function getTotalUsers() {
 // Fonction pour obtenir les statistiques de base
 async function getStats() {
   const totalUsers = await getTotalUsers();
-  const tatalAdmin = await prisma.administrateur.count()
-  const tatalClient = await prisma.client.count()
-  const tatalAssistant = await prisma.assistant.count()
-  const totalAgent = await prisma.agent.count()
+  const tatalAdmin = await prisma.administrateur.count();
+  const tatalClient = await prisma.client.count();
+  const tatalAssistant = await prisma.assistant.count();
+  const totalAgent = await prisma.agent.count();
   const totalOrders = await prisma.commande.count();
-  const pendingOrders = await prisma.commande.count({ where: { statut: "En attente" } });
+  const pendingOrders = await prisma.commande.count({
+    where: { statut: "En attente" },
+  });
   const totalRevenue = await prisma.facture.aggregate({
     _sum: { montant: true },
     where: { status: "Payée" },
@@ -40,8 +42,8 @@ async function getStats() {
   return {
     totalUsers,
     tatalAdmin,
-    tatalClient, 
-    tatalAssistant, 
+    tatalClient,
+    tatalAssistant,
     totalAgent,
     totalOrders,
     totalRevenue: totalRevenue._sum.montant || 0,
@@ -51,49 +53,70 @@ async function getStats() {
   };
 }
 
-
 export async function GET(req: NextRequest) {
   try {
-    const token = cookies().get("auth-token")?.value;
+    const cookiesStore = await cookies();
+    const token = cookiesStore.get("auth-token")?.value;
     if (!token) return ApiResponse.unauthorized();
 
     try {
-      const decoded = verify(token, process.env.NEXTAUTH_SECRET!) as { id: string; role: string };
-      if (decoded.role !== "ADMIN") return ApiResponse.forbidden("Accès réservé aux administrateurs");
+      const decoded = verify(token, process.env.NEXTAUTH_SECRET!) as {
+        id: string;
+        role: string;
+      };
+      if (decoded.role !== "ADMIN")
+        return ApiResponse.forbidden("Accès réservé aux administrateurs");
 
       const stats = await getStats();
 
       return ApiResponse.success(stats);
     } catch {
-      cookies().delete("auth-token");
+      cookiesStore.delete("auth-token");
       return ApiResponse.unauthorized();
     }
   } catch (error) {
     console.error("Error fetching admin dashboard stats:", error);
-    return ApiResponse.serverError("Une erreur est survenue lors du chargement des statistiques");
+    return ApiResponse.serverError(
+      "Une erreur est survenue lors du chargement des statistiques"
+    );
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const token = cookies().get("auth-token")?.value;
+    const cookiesStore = await cookies();
+    const token = cookiesStore.get("auth-token")?.value;
     if (!token) return ApiResponse.unauthorized();
 
     try {
-      const decoded = verify(token, process.env.NEXTAUTH_SECRET!) as { id: string; role: string };
-      if (decoded.role !== "ADMIN") return ApiResponse.forbidden("Accès réservé aux administrateurs");
+      const decoded = verify(token, process.env.NEXTAUTH_SECRET!) as {
+        id: string;
+        role: string;
+      };
+      if (decoded.role !== "ADMIN")
+        return ApiResponse.forbidden("Accès réservé aux administrateurs");
 
       const { from, to } = await req.json();
-      if (!from || !to) return ApiResponse.error("Les dates de début et de fin sont requises");
+      if (!from || !to)
+        return ApiResponse.error("Les dates de début et de fin sont requises");
 
       const fromDate = new Date(from);
       const toDate = new Date(to);
 
       // Récupération des statistiques filtrées par plage de dates
-      const totalUsers = await prisma.client.count({ where: { createdAt: { gte: fromDate, lte: toDate } } })
-        + await prisma.assistant.count({ where: { createdAt: { gte: fromDate, lte: toDate } } })
-        + await prisma.agent.count({ where: { createdAt: { gte: fromDate, lte: toDate } } })
-        + await prisma.administrateur.count({ where: { createdAt: { gte: fromDate, lte: toDate } } });
+      const totalUsers =
+        (await prisma.client.count({
+          where: { createdAt: { gte: fromDate, lte: toDate } },
+        })) +
+        (await prisma.assistant.count({
+          where: { createdAt: { gte: fromDate, lte: toDate } },
+        })) +
+        (await prisma.agent.count({
+          where: { createdAt: { gte: fromDate, lte: toDate } },
+        })) +
+        (await prisma.administrateur.count({
+          where: { createdAt: { gte: fromDate, lte: toDate } },
+        }));
 
       const totalOrders = await prisma.commande.count({
         where: { createdAt: { gte: fromDate, lte: toDate } },
@@ -137,11 +160,16 @@ export async function POST(req: NextRequest) {
         openTickets,
       });
     } catch {
-      cookies().delete("auth-token");
+      cookiesStore.delete("auth-token");
       return ApiResponse.unauthorized();
     }
   } catch (error) {
-    console.error("Error fetching admin dashboard stats with date range:", error);
-    return ApiResponse.serverError("Une erreur est survenue lors du chargement des statistiques");
+    console.error(
+      "Error fetching admin dashboard stats with date range:",
+      error
+    );
+    return ApiResponse.serverError(
+      "Une erreur est survenue lors du chargement des statistiques"
+    );
   }
 }

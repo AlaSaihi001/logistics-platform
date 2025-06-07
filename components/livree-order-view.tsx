@@ -151,9 +151,17 @@ export function LivreeOrderView({ order }: LivreeOrderViewProps) {
               Position actuelle:{" "}
               <span className="font-medium">{order.adresseActuel}</span>
             </div>
-            <Button variant="outline" size="sm" className="text-blue-700">
-              Voir sur la carte
-            </Button>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                order.adresseActuel
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" size="sm" className="text-blue-700">
+                Voir sur la carte
+              </Button>
+            </a>
           </div>
         </CardContent>
       </Card>
@@ -232,12 +240,12 @@ export function LivreeOrderView({ order }: LivreeOrderViewProps) {
           <CardTitle className="text-lg">Notes</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {order.notes?.map((note, index) => (
+          {/* {order.notes?.map((note, index) => (
             <div key={index} className="flex items-start gap-2 text-blue-700">
               <AlertTriangle className="h-5 w-5 shrink-0" />
               <span>{note}</span>
             </div>
-          ))}
+          ))} */}
         </CardContent>
       </Card>
 
@@ -247,10 +255,22 @@ export function LivreeOrderView({ order }: LivreeOrderViewProps) {
           <CardTitle className="text-lg">Facture</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button variant="outline" className="w-full">
-            <FileText className="mr-2 h-4 w-4" />
-            Télécharger la facture
-          </Button>
+          {order.factures && order.factures.length > 0 ? (
+            <a
+              href={order.factures[0].document}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" className="w-full">
+                <FileText className="mr-2 h-4 w-4" />
+                Télécharger la facture
+              </Button>
+            </a>
+          ) : (
+            <div className="text-sm text-muted-foreground text-center">
+              Aucune facture à afficher
+            </div>
+          )}
         </CardContent>
       </Card>
 

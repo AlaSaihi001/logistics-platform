@@ -12,7 +12,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     <div className="flex min-h-screen flex-col">
       <DashboardHeader userType="admin" />
       <div className="flex flex-1">
-        <div className="hidden md:block">
+        <div className="hidden md:block w-72">
           <AdminSidebar />
         </div>
         <main className="flex-1 p-4 md:p-6">{children}</main>

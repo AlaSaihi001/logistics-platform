@@ -1,65 +1,230 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useParams } from "next/navigation"
-import { ArrowLeft, Receipt, Download, Send, Bell, Check, Building, CreditCard, Mail, Phone } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { StatusBadge } from "@/components/status-badge"
-import { Table, TableBody, TableCell, TableHead, TableRow, TableHeader } from "@/components/ui/table"
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import {
+  ArrowLeft,
+  Receipt,
+  Download,
+  Send,
+  Bell,
+  Check,
+  Building,
+  CreditCard,
+  Mail,
+  Phone,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { StatusBadge } from "@/components/status-badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TableHeader,
+} from "@/components/ui/table";
+import { useToast } from "@/components/ui/use-toast";
+// Types for our data
+export interface Client {
+  id: number;
+  nom: string;
+  prenom: string;
+  email: string;
+  indicatifPaysTelephone: string;
+  telephone: number;
+  motDePasse: string;
+  image: string | null;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
+export interface Commande {
+  id: number;
+  clientId: number;
+  assistantId: number;
+  agentId: number;
+  nom: string;
+  pays: string;
+  adresse: string;
+  dateDePickup: string;
+  dateArrivage: string;
+  valeurMarchandise: number;
+  typeCommande: string;
+  typeTransport: string;
+  ecoterme: string;
+  modePaiement: string;
+  nomDestinataire: string;
+  paysDestinataire: string;
+  adresseDestinataire: string;
+  indicatifTelephoneDestinataire: string;
+  telephoneDestinataire: number;
+  emailDestinataire: string;
+  statut: string;
+  adresseActuel: string;
+  dateCommande: string;
+  createdAt: string;
+  updatedAt: string;
+  notes: any[];
+  produits: any[]; // You can replace `any` with a more specific type if needed
+}
+
+export interface Facture {
+  id: number;
+  idCommande: number;
+  idClient: number;
+  idAgent: number;
+  document: string;
+  numeroFacture: number;
+  montant: number;
+  dateEmission: string;
+  status: string;
+  assistantId: number;
+  createdAt: string;
+  updatedAt: string;
+  client: Client;
+  commande: Commande;
+}
 // Données fictives pour une facture
 const getFactureDetails = (id: string) => {
   return {
-    id,
-    expedition: "EXP-2023-089",
-    client: {
-      nom: "TechGlobal",
-      adresse: "123 Avenue de la Technologie, 75001 Paris, France",
-      email: "finance@techglobal.com",
-      telephone: "+33 1 23 45 67 89",
-    },
-    montantHT: 1250.0,
-    tva: 250.0,
-    montantTTC: 1500.0,
-    dateEmission: "15/03/2023",
-    dateEcheance: "15/04/2023",
-    status: "en-attente",
     modePaiement: "Virement bancaire",
     coordonneesBancaires: {
       iban: "FR76 1234 5678 9012 3456 7890 123",
       bic: "ABCDEFGHIJK",
       banque: "Banque Internationale",
     },
-    lignes: [
-      { description: "Transport maritime - Conteneur 20'", quantite: 1, prixUnitaire: 800.0, montant: 800.0 },
-      { description: "Frais de manutention", quantite: 1, prixUnitaire: 250.0, montant: 250.0 },
-      { description: "Assurance transport", quantite: 1, prixUnitaire: 200.0, montant: 200.0 },
-    ],
-  }
-}
+  };
+};
 
 export default function FactureDetailsPage() {
-  const params = useParams()
-  const factureId = params.id as string
-  const facture = getFactureDetails(factureId)
+  console.log("FactureDetailsPage rendered");
 
-  const [status, setStatus] = useState(facture.status)
+  const params = useParams();
+  console.log("params:", params);
 
-  const handleSendInvoice = () => {
-    setStatus("en-attente")
-    // Ici, vous implémenteriez la logique pour envoyer la facture
-  }
+  const factureId = params.id as string;
+  console.log("factureId:", factureId);
+  const [facture, setFacture] = useState<Facture | null>(null);
+  const [status, setStatus] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+  useEffect(() => {
+    const fetchFactures = async () => {
+      setIsLoading(true);
+      setError(null);
 
-  const handleMarkAsPaid = () => {
-    setStatus("payee")
-    // Ici, vous implémenteriez la logique pour marquer la facture comme payée
-  }
+      try {
+        const response = await fetch(`/api/agent/factures/${factureId}`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch invoice");
+        }
+
+        const data = await response.json();
+        setFacture(data);
+      } catch (err) {
+        console.error("Error fetching invoice:", err);
+        setError(
+          "Une erreur est survenue lors du chargement de la facture. Veuillez réessayer."
+        );
+        toast({
+          variant: "destructive",
+          title: "Erreur de chargement",
+          description: "Impossible de charger la facture.",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchFactures();
+  }, [factureId]);
+
+  const handleSendInvoice = async (factureId: string) => {
+    try {
+      const response = await fetch(`/api/agent/factures/${factureId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: "envoyer" }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send invoice");
+      }
+
+      toast({
+        title: "Facture envoyée",
+        description: "La facture a été envoyée au client avec succès.",
+      });
+
+      // Update the local state to reflect the change
+      // ✅ Since facture is a single object, update it directly
+      setFacture((prevFacture) =>
+        prevFacture && prevFacture.id.toString() === factureId
+          ? { ...prevFacture, status: "Envoyée" }
+          : prevFacture
+      );
+    } catch (err) {
+      console.error("Error sending invoice:", err);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible d'envoyer la facture. Veuillez réessayer.",
+      });
+    }
+  };
+
+  const handleMarkAsPaid = async (factureId: string) => {
+    try {
+      const response = await fetch(`/api/agent/factures/${factureId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: "payer" }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send invoice");
+      }
+
+      toast({
+        title: "Facture Payée",
+        description: "La facture a été envoyée au client avec succès.",
+      });
+
+      // Update the local state to reflect the change
+      // ✅ Since facture is a single object, update it directly
+      setFacture((prevFacture) =>
+        prevFacture && prevFacture.id.toString() === factureId
+          ? { ...prevFacture, status: "Payée" }
+          : prevFacture
+      );
+    } catch (err) {
+      console.error("Error sending invoice:", err);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible d'envoyer la facture. Veuillez réessayer.",
+      });
+    }
+  };
 
   const handleRemindClient = () => {
     // Ici, vous implémenteriez la logique pour relancer le client
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -71,18 +236,22 @@ export default function FactureDetailsPage() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{factureId}</h1>
-            <StatusBadge status={status as any} className="ml-2" />
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              {factureId}
+            </h1>
+            <StatusBadge status={facture?.status as any} className="ml-2" />
           </div>
           <p className="text-muted-foreground mt-1">
-            Expédition {facture.expedition} - {facture.client.nom}
+            Expédition {facture?.dateEmission}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" className="gap-2 w-full sm:w-auto">
-            <Download className="h-4 w-4" />
-            Télécharger PDF
-          </Button>
+          <a href={facture?.document} download>
+            <Button variant="outline" className="gap-2 w-full sm:w-auto">
+              <Download className="h-4 w-4" />
+              Télécharger PDF
+            </Button>
+          </a>
         </div>
       </div>
 
@@ -96,16 +265,18 @@ export default function FactureDetailsPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="font-medium text-lg">{facture.client.nom}</p>
-              <p className="whitespace-pre-line text-muted-foreground">{facture.client.adresse}</p>
+              <p className="font-medium text-lg">{facture?.client?.nom}</p>
+              <p className="whitespace-pre-line text-muted-foreground">
+                {facture?.client?.adresse}
+              </p>
               <div className="mt-3 pt-3 border-t border-border flex flex-col gap-1">
                 <p className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="break-all">{facture.client.email}</span>
+                  <span className="break-all">{facture?.client?.email}</span>
                 </p>
                 <p className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-muted-foreground" />
-                  {facture.client.telephone}
+                  {facture?.client?.telephone}
                 </p>
               </div>
             </div>
@@ -122,28 +293,32 @@ export default function FactureDetailsPage() {
           <CardContent className="space-y-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="p-3 rounded-lg bg-muted/50">
-                <p className="text-sm text-muted-foreground">Numéro de facture</p>
+                <p className="text-sm text-muted-foreground">
+                  Numéro de facture
+                </p>
                 <p className="font-medium">{factureId}</p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50">
                 <p className="text-sm text-muted-foreground">Expédition</p>
-                <p className="font-medium">{facture.expedition}</p>
+                <p className="font-medium">{facture?.commande?.dateDePickup}</p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50">
                 <p className="text-sm text-muted-foreground">Date d'émission</p>
-                <p className="font-medium">{facture.dateEmission}</p>
+                <p className="font-medium">{facture?.dateEmission}</p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50">
                 <p className="text-sm text-muted-foreground">Date d'échéance</p>
-                <p className="font-medium">{facture.dateEcheance}</p>
+                <p className="font-medium">{facture?.dateEmission}</p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50">
                 <p className="text-sm text-muted-foreground">Statut</p>
-                <StatusBadge status={status as any} />
+                <StatusBadge status={facture?.status as any} />
               </div>
               <div className="p-3 rounded-lg bg-muted/50">
-                <p className="text-sm text-muted-foreground">Mode de paiement</p>
-                <p className="font-medium">{facture.modePaiement}</p>
+                <p className="text-sm text-muted-foreground">
+                  Mode de paiement
+                </p>
+                <p className="font-medium">{facture?.commande?.modePaiement}</p>
               </div>
             </div>
           </CardContent>
@@ -166,12 +341,20 @@ export default function FactureDetailsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {facture.lignes.map((ligne, index) => (
+                {facture?.commande?.produits.map((ligne, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{ligne.description}</TableCell>
-                    <TableCell className="text-right">{ligne.quantite}</TableCell>
-                    <TableCell className="text-right">{ligne.prixUnitaire.toFixed(2)} €</TableCell>
-                    <TableCell className="text-right">{ligne.montant.toFixed(2)} €</TableCell>
+                    <TableCell className="font-medium">
+                      {ligne.description}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {ligne.quantite}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {ligne.tarifUnitaire.toFixed(2)} €
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {ligne.tarifUnitaire.toFixed(2) * ligne.quantite} €
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -181,15 +364,15 @@ export default function FactureDetailsPage() {
           <div className="mt-6 space-y-2 p-4 rounded-lg bg-muted/50">
             <div className="flex justify-between">
               <span>Sous-total</span>
-              <span>{facture.montantHT.toFixed(2)} €</span>
+              <span>{facture?.montant?.toFixed(2) * 0.8} €</span>
             </div>
             <div className="flex justify-between">
               <span>TVA (20%)</span>
-              <span>{facture.tva.toFixed(2)} €</span>
+              <span>{(facture?.montant?.toFixed(2) * 0.2).toFixed(2)} €</span>
             </div>
             <div className="flex justify-between font-bold text-lg pt-2 border-t border-border mt-2">
               <span>Total</span>
-              <span>{facture.montantTTC.toFixed(2)} €</span>
+              <span>{facture?.montant?.toFixed(2)} €</span>
             </div>
           </div>
         </CardContent>
@@ -205,32 +388,48 @@ export default function FactureDetailsPage() {
         <CardContent className="space-y-3">
           <div className="p-3 rounded-lg bg-muted/50">
             <p className="text-sm text-muted-foreground">IBAN</p>
-            <p className="font-mono font-medium break-all">{facture.coordonneesBancaires.iban}</p>
+            <p className="font-mono font-medium break-all">
+              {facture?.coordonneesBancaires?.iban}
+            </p>
           </div>
           <div className="p-3 rounded-lg bg-muted/50">
             <p className="text-sm text-muted-foreground">BIC</p>
-            <p className="font-mono font-medium">{facture.coordonneesBancaires.bic}</p>
+            <p className="font-mono font-medium">
+              {facture?.coordonneesBancaires?.bic}
+            </p>
           </div>
           <div className="p-3 rounded-lg bg-muted/50">
             <p className="text-sm text-muted-foreground">Banque</p>
-            <p className="font-medium">{facture.coordonneesBancaires.banque}</p>
+            <p className="font-medium">
+              {facture?.coordonneesBancaires?.banque}
+            </p>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row justify-end gap-3 pt-6">
-          {status === "en-attente" && (
-            <Button className="gap-2 bg-blue-500 hover:bg-blue-600 w-full sm:w-auto" onClick={handleSendInvoice}>
+          {facture?.status === "En attente" && (
+            <Button
+              className="gap-2 bg-blue-500 hover:bg-blue-600 w-full sm:w-auto"
+              onClick={() => handleSendInvoice(factureId)}
+            >
               <Send className="h-4 w-4" />
               Envoyer au client
             </Button>
           )}
           {status === "en-retard" && (
-            <Button className="gap-2 bg-orange-500 hover:bg-orange-600 w-full sm:w-auto" onClick={handleRemindClient}>
+            <Button
+              className="gap-2 bg-orange-500 hover:bg-orange-600 w-full sm:w-auto"
+              onClick={handleRemindClient}
+            >
               <Bell className="h-4 w-4" />
               Relancer le client
             </Button>
           )}
-          {(status === "en-attente" || status === "en-retard") && (
-            <Button className="gap-2 bg-green-500 hover:bg-green-600 w-full sm:w-auto" onClick={handleMarkAsPaid}>
+          {(facture?.status === "En attente" ||
+            facture?.status === "Envoyée") && (
+            <Button
+              className="gap-2 bg-green-500 hover:bg-green-600 w-full sm:w-auto"
+              onClick={() => handleMarkAsPaid(factureId)}
+            >
               <Check className="h-4 w-4" />
               Marquer comme payée
             </Button>
@@ -238,5 +437,5 @@ export default function FactureDetailsPage() {
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,182 +1,79 @@
-import { compare, hash } from "bcryptjs"
-import { PrismaClient } from "@prisma/client"
+import { type NextRequest, NextResponse } from "next/server";
+import { compare } from "bcryptjs";
+import { sign } from "jsonwebtoken";
+import prisma from "@/lib/prisma";
+import { rateLimiter } from "@/lib/rate-limiter";
+import { ApiResponse } from "@/lib/api-response";
 
-const prisma = new PrismaClient()
+export async function POST(req: NextRequest) {
+  try {
+    // Anti-bruteforce par IP
+    const ip = req.ip ?? "127.0.0.1";
+    // const rateLimit = await rateLimiter(req, ip, 5, 60);
+    // if (rateLimit) return rateLimit;
 
-export class AuthService {
-  // Authentifier un client
-  static async authenticateUser(email: string, password: string, role?: string) {
-    try {
-      const user = await prisma.client.findUnique({
-        where: { email },
-        select: {
-          id: true,
-          email: true,
-          motDePasse: true,
-          nom: true,
-          prenom: true,
-          role: true,
-          image: true,
-        },
-      })
+    const body = await req.json();
+    const { email, password } = body;
 
-      if (!user) {
-        return { success: false, error: "Identifiants incorrects" }
-      }
-
-      if (role && user.role !== role) {
-        return { success: false, error: "Rôle non autorisé" }
-      }
-
-      const isPasswordValid = await compare(password, user.motDePasse)
-      if (!isPasswordValid) {
-        return { success: false, error: "Mot de passe incorrect" }
-      }
-
-      return {
-        success: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: `${user.prenom} ${user.nom}`,
-          role: user.role,
-          image: user.image,
-        },
-      }
-    } catch (error) {
-      console.error("Erreur d'authentification :", error)
-      return { success: false, error: "Erreur interne" }
+    // Vérification des champs requis
+    if (!email || !password) {
+      return ApiResponse.validationError({
+        email: !email ? "Email requis" : "",
+        password: !password ? "Mot de passe requis" : "",
+      });
     }
-  }
 
-  // Authentifier un assistant
-  static async authenticateAssistant(email: string, password: string) {
-    try {
-      const assistant = await prisma.assistant.findUnique({
-        where: { email },
-        select: {
-          id: true,
-          email: true,
-          motDePasse: true,
-          nom: true,
-          prenom: true,
-          role: true,
-          image: true,
-        },
-      })
-
-      if (!assistant) {
-        return { success: false, error: "Identifiants incorrects" }
-      }
-
-      const isPasswordValid = await compare(password, assistant.motDePasse)
-      if (!isPasswordValid) {
-        return { success: false, error: "Mot de passe incorrect" }
-      }
-
-      return {
-        success: true,
-        user: {
-          id: assistant.id,
-          email: assistant.email,
-          name: `${assistant.prenom} ${assistant.nom}`,
-          role: assistant.role,
-          image: assistant.image,
-        },
-      }
-    } catch (error) {
-      console.error("Erreur assistant login :", error)
-      return { success: false, error: "Erreur interne" }
+    // Recherche de l'assistant
+    const assistant = await prisma.assistant.findUnique({ where: { email } });
+    if (!assistant) {
+      return ApiResponse.error("Identifiants invalides", { status: 401 });
     }
-  }
 
-  // Enregistrer un nouveau client
-  static async registerUser(userData: {
-    email: string
-    password: string
-    nom: string
-    prenom: string
-    telephone: string
-    indicatifTelephone: string
-  }) {
-    try {
-      const existingClient = await prisma.client.findUnique({
-        where: { email: userData.email },
-      })
-
-      if (existingClient) {
-        return { success: false, error: "Cet email est déjà utilisé" }
-      }
-
-      const hashedPassword = await hash(userData.password, 12)
-
-      const client = await prisma.client.create({
-        data: {
-          email: userData.email,
-          motDePasse: hashedPassword,
-          nom: userData.nom,
-          prenom: userData.prenom,
-          telephone: parseInt(userData.telephone),
-          indicatifPaysTelephone: userData.indicatifTelephone,
-          role: "CLIENT",
-        },
-        select: {
-          id: true,
-          email: true,
-          nom: true,
-          prenom: true,
-          role: true,
-          image: true,
-        },
-      })
-
-      return {
-        success: true,
-        user: {
-          id: client.id,
-          email: client.email,
-          name: `${client.prenom} ${client.nom}`,
-          role: client.role,
-          image: client.image,
-        },
-      }
-    } catch (error) {
-      console.error("Erreur enregistrement client :", error)
-      return { success: false, error: "Erreur interne à l'inscription" }
+    // Vérification du mot de passe
+    const match = password === assistant.motDePasse;
+    if (!match) {
+      return ApiResponse.error("Identifiants invalides", { status: 401 });
     }
-  }
 
-  // Modifier mot de passe client
-  static async changePassword(userId: number, currentPassword: string, newPassword: string) {
-    try {
-      const user = await prisma.client.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          motDePasse: true,
-        },
-      })
+    // Génération du token
+    const token = sign(
+      {
+        id: assistant.id,
+        email: assistant.email,
+        name: `${assistant.prenom} ${assistant.nom}`,
+        role: assistant.role,
+        image: assistant.image ?? null,
+      },
+      process.env.NEXTAUTH_SECRET!,
+      { expiresIn: "1d" }
+    );
 
-      if (!user) {
-        return { success: false, error: "Client non trouvé" }
-      }
+    // Création de la réponse + cookie
+    const response = NextResponse.json({
+      user: {
+        id: assistant.id,
+        email: assistant.email,
+        name: `${assistant.prenom} ${assistant.nom}`,
+        role: assistant.role,
+        image: assistant.image ?? null,
+      },
+    });
 
-      const isPasswordValid = await compare(currentPassword, user.motDePasse)
-      if (!isPasswordValid) {
-        return { success: false, error: "Mot de passe actuel incorrect" }
-      }
+    response.cookies.set({
+      name: "auth-token",
+      value: token,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24, // 1 jour
+      path: "/",
+    });
 
-      const hashedPassword = await hash(newPassword, 12)
-
-      await prisma.client.update({
-        where: { id: userId },
-        data: { motDePasse: hashedPassword },
-      })
-
-      return { success: true }
-    } catch (error) {
-      console.error("Erreur changement mot de passe :", error)
-      return { success: false, error: "Erreur interne" }
-    }
+    return response;
+  } catch (error) {
+    console.error("assistant login error:", error);
+    return ApiResponse.serverError(
+      "Erreur lors de la connexion assistantistrateur"
+    );
   }
 }

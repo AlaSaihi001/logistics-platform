@@ -4,10 +4,15 @@ import { prisma } from "@/lib/prisma";
 import { getUserFromToken } from "@/lib/jwt-utils";
 
 export async function GET(req: NextRequest) {
+  console.log("📥 [GET] /api/factures called");
+
   try {
+    // Step 1: Extract and validate user
     const user = await getUserFromToken(req);
+    console.log("🔑 User from token:", user);
 
     if (!user) {
+      console.warn("🚫 No user found from token");
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -15,14 +20,21 @@ export async function GET(req: NextRequest) {
     const role = user.role;
     const statusFilter = req.nextUrl.searchParams.get("status");
 
+    console.log("🧾 Parsed userId:", userId);
+    console.log("🧑‍💼 User role:", role);
+    console.log("🔍 Status filter:", statusFilter);
+
     let factures;
 
+    // Step 2: Handle CLIENT role
     if (role === "CLIENT") {
       const whereClause: any = { idClient: userId };
 
       if (statusFilter) {
         whereClause.status = { in: statusFilter.split(",") };
       }
+
+      console.log("🧮 CLIENT whereClause:", whereClause);
 
       factures = await prisma.facture.findMany({
         where: whereClause,
@@ -32,12 +44,19 @@ export async function GET(req: NextRequest) {
         },
         orderBy: { dateEmission: "desc" },
       });
-    } else if (role === "ASSISTANT") {
+
+      console.log("📄 Factures for CLIENT:", factures);
+    }
+
+    // Step 3: Handle ASSISTANT role
+    else if (role === "ASSISTANT") {
       const whereClause: any = {};
 
       if (statusFilter) {
         whereClause.status = { in: statusFilter.split(",") };
       }
+
+      console.log("🧮 ASSISTANT whereClause:", whereClause);
 
       factures = await prisma.facture.findMany({
         where: whereClause,
@@ -55,17 +74,24 @@ export async function GET(req: NextRequest) {
         },
         orderBy: { dateEmission: "desc" },
       });
-    } else {
+
+      console.log("📄 Factures for ASSISTANT:", factures);
+    }
+
+    // Step 4: Unknown role
+    else {
+      console.warn("⛔ Unauthorized role:", role);
       return NextResponse.json({ error: "Rôle non autorisé" }, { status: 403 });
     }
 
+    // Step 5: Return result
+    console.log("✅ Returning factures:", JSON.stringify(factures, null, 2));
     return NextResponse.json(factures);
-  } catch (error) {
-    console.error("Error fetching invoices:", error);
+  } catch (error: any) {
+    console.error("❌ Error fetching invoices:", error?.message || error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
-
 
 export async function POST(req: NextRequest) {
   try {
@@ -84,7 +110,7 @@ export async function POST(req: NextRequest) {
           error: "Données manquantes",
           details: "L'ID de commande et le montant sont requis",
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -95,7 +121,7 @@ export async function POST(req: NextRequest) {
           error: "Montant invalide",
           details: "Le montant doit être un nombre positif",
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -111,7 +137,9 @@ export async function POST(req: NextRequest) {
       orderBy: { numeroFacture: "desc" },
     });
 
-    const nextInvoiceNumber = lastInvoice ? lastInvoice.numeroFacture + 1 : 1000;
+    const nextInvoiceNumber = lastInvoice
+      ? lastInvoice.numeroFacture + 1
+      : 1000;
 
     const newInvoice = await prisma.facture.create({
       data: {

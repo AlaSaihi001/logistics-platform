@@ -87,7 +87,7 @@ export default function OrderDetailsPage() {
         throw new Error(`Erreur ${response.status}`);
       }
       const data = await response.json();
-
+      console.log(data);
       const formattedOrder = {
         ...data,
         dateDePickup: new Date(data.dateDePickup).toLocaleDateString("fr-FR"),
@@ -100,7 +100,7 @@ export default function OrderDetailsPage() {
           ),
         })),
       };
-
+      console.log("FORMATTED:", formattedOrder);
       setOrder(formattedOrder);
       setProducts(data.produits || []);
     } catch (error) {
@@ -197,7 +197,7 @@ export default function OrderDetailsPage() {
               isCancelling={cancellingOrder}
             />
           )}
-          {order.statut === "Acceptée" && <AccepteeOrderView order={order} />}
+          {order.statut === "Validée" && <AccepteeOrderView order={order} />}
           {order.statut === "Annulée" && <AnnuleeOrderView order={order} />}
           {order.statut === "Archivée" && <ArchiveeOrderView order={order} />}
         </TabsContent>

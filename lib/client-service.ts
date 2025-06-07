@@ -1,25 +1,28 @@
-import prisma from "@/lib/prisma"
-import { hash, compare } from "bcrypt"
+import prisma from "@/lib/prisma";
+import { hash, compare } from "bcrypt";
 
 export class ClientService {
   /**
    * Authenticate a client
    */
-  static async sAuthentifier(email: string, password: string): Promise<boolean> {
+  static async sAuthentifier(
+    email: string,
+    password: string
+  ): Promise<boolean> {
     try {
       const client = await prisma.client.findUnique({
         where: { email },
-      })
+      });
 
       if (!client) {
-        return false
+        return false;
       }
 
-      const passwordMatch = await compare(password, client.motDePasse)
-      return passwordMatch
+      const passwordMatch = await compare(password, client.motDePasse);
+      return passwordMatch;
     } catch (error) {
-      console.error("Authentication error:", error)
-      return false
+      console.error("Authentication error:", error);
+      return false;
     }
   }
 
@@ -38,49 +41,54 @@ export class ClientService {
           indicatifPaysTelephone: true,
           telephone: true,
           image: true,
+          adresse: true,
           // Exclude password
         },
-      })
+      });
 
-      return client
+      return client;
     } catch (error) {
-      console.error("Error fetching client profile:", error)
-      throw new Error("Impossible de récupérer le profil")
+      console.error("Error fetching client profile:", error);
+      throw new Error("Impossible de récupérer le profil");
     }
   }
 
   /**
    * Update client password
    */
-  static async modifierMotDePasse(clientId: number, currentPassword: string, newPassword: string) {
+  static async modifierMotDePasse(
+    clientId: number,
+    currentPassword: string,
+    newPassword: string
+  ) {
     try {
       // Verify current password
       const client = await prisma.client.findUnique({
         where: { id: clientId },
-      })
+      });
 
       if (!client) {
-        throw new Error("Client non trouvé")
+        throw new Error("Client non trouvé");
       }
 
-      const passwordMatch = await compare(currentPassword, client.motDePasse)
+      const passwordMatch = await compare(currentPassword, client.motDePasse);
       if (!passwordMatch) {
-        throw new Error("Mot de passe actuel incorrect")
+        throw new Error("Mot de passe actuel incorrect");
       }
 
       // Hash new password
-      const hashedPassword = await hash(newPassword, 12)
+      const hashedPassword = await hash(newPassword, 12);
 
       // Update password
       await prisma.client.update({
         where: { id: clientId },
         data: { motDePasse: hashedPassword },
-      })
+      });
 
-      return true
+      return true;
     } catch (error) {
-      console.error("Error updating password:", error)
-      throw error
+      console.error("Error updating password:", error);
+      throw error;
     }
   }
 
@@ -96,12 +104,12 @@ export class ClientService {
           factures: true,
         },
         orderBy: { createdAt: "desc" },
-      })
+      });
 
-      return commandes
+      return commandes;
     } catch (error) {
-      console.error("Error fetching client orders:", error)
-      throw new Error("Impossible de récupérer les commandes")
+      console.error("Error fetching client orders:", error);
+      throw new Error("Impossible de récupérer les commandes");
     }
   }
 
@@ -120,12 +128,12 @@ export class ClientService {
           },
         },
         orderBy: { createdAt: "desc" },
-      })
+      });
 
-      return paiements
+      return paiements;
     } catch (error) {
-      console.error("Error fetching client payments:", error)
-      throw new Error("Impossible de récupérer les paiements")
+      console.error("Error fetching client payments:", error);
+      throw new Error("Impossible de récupérer les paiements");
     }
   }
 
@@ -141,12 +149,12 @@ export class ClientService {
           paiement: true,
         },
         orderBy: { dateEmission: "desc" },
-      })
+      });
 
-      return factures
+      return factures;
     } catch (error) {
-      console.error("Error fetching client invoices:", error)
-      throw new Error("Impossible de récupérer les factures")
+      console.error("Error fetching client invoices:", error);
+      throw new Error("Impossible de récupérer les factures");
     }
   }
 
@@ -163,12 +171,12 @@ export class ClientService {
           },
         },
         orderBy: { updatedAt: "desc" },
-      })
+      });
 
-      return commandes
+      return commandes;
     } catch (error) {
-      console.error("Error tracking shipments:", error)
-      throw new Error("Impossible de suivre les expéditions")
+      console.error("Error tracking shipments:", error);
+      throw new Error("Impossible de suivre les expéditions");
     }
   }
 
@@ -180,19 +188,24 @@ export class ClientService {
       const notifications = await prisma.notification.findMany({
         where: { clientId },
         orderBy: { dateEmission: "desc" },
-      })
+      });
 
-      return notifications
+      return notifications;
     } catch (error) {
-      console.error("Error fetching notifications:", error)
-      throw new Error("Impossible de récupérer les notifications")
+      console.error("Error fetching notifications:", error);
+      throw new Error("Impossible de récupérer les notifications");
     }
   }
 
   /**
    * Submit a claim
    */
-  static async deposerReclamation(clientId: number, sujet: string, description: string, documents: string | null) {
+  static async deposerReclamation(
+    clientId: number,
+    sujet: string,
+    description: string,
+    documents: string | null
+  ) {
     try {
       const reclamation = await prisma.reclamation.create({
         data: {
@@ -203,7 +216,7 @@ export class ClientService {
           status: "Ouverte",
           date: new Date(),
         },
-      })
+      });
 
       // Create notification for assistants
       await prisma.notification.create({
@@ -213,12 +226,12 @@ export class ClientService {
           lu: false,
           // Send to all assistants (in a real app, you might want to send to specific assistants)
         },
-      })
+      });
 
-      return reclamation
+      return reclamation;
     } catch (error) {
-      console.error("Error submitting claim:", error)
-      throw new Error("Impossible de déposer la réclamation")
+      console.error("Error submitting claim:", error);
+      throw new Error("Impossible de déposer la réclamation");
     }
   }
 }

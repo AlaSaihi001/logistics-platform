@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Search,
@@ -15,6 +16,13 @@ import {
   XCircle,
   Phone,
   Headphones,
+  CreditCard,
+  FileText,
+  Package,
+  Users,
+  UserCog,
+  Headset,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +59,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { stat } from "fs";
 
 // Définir un type pour l'utilisateur
 interface User {
@@ -62,9 +72,11 @@ interface User {
   dateInscription: string;
   statut: string;
   image?: string;
+  role: string;
 }
 
 export default function UtilisateursPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [users, setUsers] = useState<User[]>([]);
@@ -75,6 +87,13 @@ export default function UtilisateursPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState({
+    total: 0,
+    assistant: 0,
+    admin: 0,
+    client: 0,
+    agent: 0,
+  });
 
   // Récupérer les utilisateurs avec les filtres
   const fetchUsers = async (page = 1) => {
@@ -90,13 +109,18 @@ export default function UtilisateursPage() {
 
       const response = await fetch(`/api/admin/users?${params.toString()}`);
       const data = await response.json();
-
       if (!response.ok) {
         throw new Error(
           data.error || "Erreur lors du chargement des utilisateurs"
         );
       }
-
+      setStats({
+        total: data.users.length,
+        assistant: data.assistants.length,
+        admin: data.admins.length,
+        client: data.clients.length,
+        agent: data.agents.length,
+      });
       setUsers(data.users);
       setPagination(data.pagination);
     } catch (error) {
@@ -129,7 +153,33 @@ export default function UtilisateursPage() {
   const handlePageChange = (page: number) => {
     setPagination((prev) => ({ ...prev, page }));
   };
+  const deleteUser = async (id: string, userType: string) => {
+    const confirmed = window.confirm(
+      "Êtes-vous sûr de vouloir supprimer cet utilisateur ?"
+    );
+    if (!confirmed) return;
 
+    try {
+      const response = await fetch(
+        `/api/admin/users?userId=${id}&userType=${userType}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur lors de la suppression.");
+      }
+
+      // Supprimer localement
+      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
+    } catch (error) {
+      console.error("Erreur de suppression:", error);
+      alert("Erreur lors de la suppression de l'utilisateur.");
+    }
+  };
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -154,7 +204,90 @@ export default function UtilisateursPage() {
           </Button>
         </div>
       </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Utilisateurs</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-8 w-[100px]" />
+            ) : (
+              <div className="text-2xl font-bold">{stats.total}</div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Total des utilisateurs enregistrés
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Admins</CardTitle>
+            <UserCog className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-8 w-[100px]" />
+            ) : (
+              <div className="text-2xl font-bold">{stats.admin}</div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Total des admins enregistrés
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Assistants</CardTitle>
+            <Headset className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-8 w-[100px]" />
+            ) : (
+              <div className="text-2xl font-bold">{stats.assistant}</div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Total des assistants enregistrés
+            </p>
+          </CardContent>
+        </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Agents</CardTitle>
+            <Truck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-8 w-[100px]" />
+            ) : (
+              <div className="text-2xl font-bold">{stats.agent}</div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Total des agents enregistrés
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Clients</CardTitle>
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-8 w-[100px]" />
+            ) : (
+              <div className="text-2xl font-bold">{stats.client}</div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Total des clients enregistrés
+            </p>
+          </CardContent>
+        </Card>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>Liste des utilisateurs</CardTitle>
@@ -264,8 +397,22 @@ export default function UtilisateursPage() {
                                 Voir détails
                               </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem>Modifier</DropdownMenuItem>
-                            <DropdownMenuItem>Supprimer</DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                router.push(
+                                  `/dashboard/admin/utilisateurs/ajouter?id=${user.id}`
+                                )
+                              }
+                            >
+                              Modifier
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                deleteUser(user.id, user.type.toLowerCase())
+                              }
+                            >
+                              Supprimer
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

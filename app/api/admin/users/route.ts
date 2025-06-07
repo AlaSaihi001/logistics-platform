@@ -2,7 +2,6 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getUserFromToken } from "@/lib/jwt-utils"; // Import the new function
 import prisma from "@/lib/prisma"; // Prisma Client
 
-
 import bcrypt from "bcryptjs"; // For hashing the password
 
 // POST /api/admin/users - Create a new user
@@ -11,7 +10,10 @@ export async function POST(req: NextRequest) {
     const decoded = await getUserFromToken(req); // Get the user from the token
 
     if (!decoded) {
-      return NextResponse.json({ error: "Token missing or invalid" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Token missing or invalid" },
+        { status: 401 }
+      );
     }
 
     if (decoded.role !== "ADMIN") {
@@ -20,11 +22,31 @@ export async function POST(req: NextRequest) {
 
     // Parse the request body to get the user data
     const body = await req.json();
-    const { firstName, lastName, email, phone, password, userType, sendCredentials } = body;
-
+    const {
+      firstName,
+      lastName,
+      email,
+      numericPhone,
+      indicatifPaysTelephone,
+      password,
+      userType,
+      sendCredentials,
+      address,
+    } = body;
+    console.log(body);
     // Validate input data (basic checks)
-    if (!firstName || !lastName || !email || !phone || !password || !userType) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (
+      !firstName ||
+      !lastName ||
+      !email ||
+      !numericPhone ||
+      !password ||
+      !userType
+    ) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
     // Check if the user already exists (email should be unique)
@@ -32,7 +54,10 @@ export async function POST(req: NextRequest) {
       where: { email },
     });
     if (existingUser) {
-      return NextResponse.json({ error: "User already exists" }, { status: 409 });
+      return NextResponse.json(
+        { error: "User already exists" },
+        { status: 409 }
+      );
     }
 
     // Hash the password before storing
@@ -44,9 +69,11 @@ export async function POST(req: NextRequest) {
         nom: firstName,
         prenom: lastName,
         email,
-        telephone: phone,
-        motDePasse: hashedPassword, // Store hashed password
-        role: userType.toUpperCase(), // Ensure user role is uppercase
+        indicatifPaysTelephone: indicatifPaysTelephone,
+        telephone: numericPhone,
+        motDePasse: password, // Store hashed password
+        role: userType.toUpperCase(),
+        adresse: address, // Ensure user role is uppercase
       },
     });
 
@@ -63,14 +90,16 @@ export async function POST(req: NextRequest) {
   }
 }
 
-
 // GET /api/admin/users - Get all users
 export async function GET(req: NextRequest) {
   try {
     const decoded = await getUserFromToken(req); // Get user from the token
 
     if (!decoded) {
-      return NextResponse.json({ error: "Token missing or invalid" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Token missing or invalid" },
+        { status: 401 }
+      );
     }
 
     if (decoded.role !== "ADMIN") {
@@ -99,6 +128,7 @@ export async function GET(req: NextRequest) {
           email: true,
           telephone: true,
           createdAt: true,
+          role: true,
         },
       }),
       prisma.agent.findMany({
@@ -110,6 +140,7 @@ export async function GET(req: NextRequest) {
           email: true,
           telephone: true,
           createdAt: true,
+          role: true,
         },
       }),
       prisma.assistant.findMany({
@@ -121,6 +152,7 @@ export async function GET(req: NextRequest) {
           email: true,
           telephone: true,
           createdAt: true,
+          role: true,
         },
       }),
       prisma.administrateur.findMany({
@@ -132,6 +164,7 @@ export async function GET(req: NextRequest) {
           email: true,
           telephone: true,
           createdAt: true,
+          role: true,
         },
       }),
     ]);
@@ -162,7 +195,9 @@ export async function GET(req: NextRequest) {
         email: assistant.email,
         telephone: assistant.telephone,
         type: "assistant",
-        dateInscription: new Date(assistant.createdAt).toLocaleDateString("fr-FR"),
+        dateInscription: new Date(assistant.createdAt).toLocaleDateString(
+          "fr-FR"
+        ),
       })),
       ...admins.map((admin) => ({
         id: `ADM-${admin.id}`,
@@ -179,6 +214,10 @@ export async function GET(req: NextRequest) {
     const total = formattedUsers.length;
 
     return NextResponse.json({
+      clients: clients,
+      admins: admins,
+      agents: agents,
+      assistants: assistants,
       users: paginatedUsers,
       pagination: {
         total,
@@ -192,4 +231,125 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }
 }
+// DELETE /api/admin/users - Delete a user
+export async function DELETE(req: NextRequest) {
+  try {
+    const decoded = await getUserFromToken(req);
 
+    if (!decoded) {
+      return NextResponse.json(
+        { error: "Token missing or invalid" },
+        { status: 401 }
+      );
+    }
+
+    if (decoded.role !== "ADMIN") {
+      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
+    }
+
+    // Get userType and userId from query params
+    const searchParams = req.nextUrl.searchParams;
+    const userType = searchParams.get("userType");
+    const userId = searchParams.get("userId");
+
+    if (!userType || !userId) {
+      return NextResponse.json(
+        { error: "Missing userType or userId" },
+        { status: 400 }
+      );
+    }
+
+    // Parse the actual ID part if prefixed like AGT-123
+    const numericId = parseInt(userId.replace(/^\w+-/, ""), 10);
+
+    // Check if the table exists in the schema
+    if (
+      !["client", "agent", "assistant", "administrateur"].includes(userType)
+    ) {
+      return NextResponse.json({ error: "Invalid user type" }, { status: 400 });
+    }
+
+    const deletedUser = await prisma[userType].delete({
+      where: { id: numericId },
+    });
+
+    return NextResponse.json(
+      { message: "User deleted successfully", user: deletedUser },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("Error deleting user:", error);
+
+    if (error.code === "P2025") {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+// PATCH /api/admin/users - Update an existing user
+export async function PUT(req: NextRequest) {
+  try {
+    const decoded = await getUserFromToken(req);
+
+    if (!decoded) {
+      return NextResponse.json(
+        { error: "Token missing or invalid" },
+        { status: 401 }
+      );
+    }
+
+    if (decoded.role !== "ADMIN") {
+      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const {
+      id,
+      firstName,
+      lastName,
+      email,
+      numericPhone,
+      indicatifPaysTelephone,
+      userType,
+      address,
+    } = body;
+
+    if (
+      !id ||
+      !firstName ||
+      !lastName ||
+      !email ||
+      !numericPhone ||
+      !userType
+    ) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    const numericId = parseInt(id.replace(/^\w+-/, ""), 10);
+
+    const updatedUser = await prisma[userType].update({
+      where: { id: numericId },
+      data: {
+        nom: firstName,
+        prenom: lastName,
+        email: email,
+        indicatifPaysTelephone: indicatifPaysTelephone,
+        telephone: numericPhone,
+        role: userType.toUpperCase(),
+        addresse: address,
+      },
+    });
+
+    return NextResponse.json({ user: updatedUser }, { status: 200 });
+  } catch (error: any) {
+    console.error("Error updating user:", error);
+    if (error.code === "P2025") {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}

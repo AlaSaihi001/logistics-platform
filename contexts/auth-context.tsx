@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         setIsLoading(true);
         const res = await fetch("/api/client-auth/session");
-        console.log("Res from checkAuth:",res)
+        console.log("Res from checkAuth:", res);
         if (!res.ok) throw new Error("Non authentifié");
 
         const data = await res.json();
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ email, password }),
       });
 
-      console.log("response",response)
+      console.log("response", response);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await response.json();
-      console.log("data", data)
+      console.log("data", data);
       setUser(data.user);
 
       toast({
@@ -105,10 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Redirection vers le tableau de bord approprié
       if (data?.user?.id) {
-        console.log('Should redirect')
+        console.log("Should redirect");
         // router.refresh();
         // router.push('/')
-
       }
 
       return true;
@@ -210,7 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context = useContext(AuthContext) ?? {};
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }

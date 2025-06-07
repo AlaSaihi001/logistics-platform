@@ -23,9 +23,19 @@ import {
   Clock,
   XCircle,
   AlertTriangle,
+  Link,
 } from "lucide-react";
 import { useAuthSession } from "@/hooks/use-auth-session";
-
+import { Button } from "@/components/ui/button";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
 // Active API integration for fetching dashboard data
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -40,7 +50,8 @@ export default function AdminDashboardPage() {
     pendingPayments: 0,
     openTickets: 0,
   });
-
+  const [revenue, setRevenue] = useState([]);
+  const [Orders, setOrders] = useState([]);
   // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
@@ -78,6 +89,55 @@ export default function AdminDashboardPage() {
     fetchDashboardData();
   }, []);
 
+  useEffect(() => {
+    const fetchCommandesData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const response = await fetch("/api/admin/commandes");
+
+        if (!response.ok) {
+          throw new Error("Erreur lors du chargement des données");
+        }
+
+        const data = await response.json();
+        setOrders(data);
+      } catch (error) {
+        console.error("Erreur de récupération des données:", error);
+        setError("Impossible de charger les données du tableau de bord");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCommandesData();
+  }, []);
+  useEffect(() => {
+    const fetchRevenueData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const response = await fetch("/api/admin/dashboard/revenue");
+
+        if (!response.ok) {
+          throw new Error("Erreur lors du chargement des données");
+        }
+
+        const data = await response.json();
+        setRevenue(data);
+      } catch (error) {
+        console.error("Erreur de récupération des données:", error);
+        setError("Impossible de charger les données du tableau de bord");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRevenueData();
+  }, []);
+
   // Handle date range change
   const handleDateRangeChange = async (dateRange: { from: Date; to: Date }) => {
     try {
@@ -111,7 +171,24 @@ export default function AdminDashboardPage() {
       setIsLoading(false);
     }
   };
-
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case "En attente":
+        return "bg-yellow-100 text-yellow-800";
+      case "Validée":
+        return "bg-green-100 text-green-800";
+      case "Ouverte":
+        return "bg-blue-100 text-blue-800";
+      case "En cours":
+        return "bg-purple-100 text-purple-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+  const histoChartData = revenue.map((item) => ({
+    name: item.month,
+    Revenus: item.total,
+  }));
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -133,13 +210,6 @@ export default function AdminDashboardPage() {
       )}
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-          <TabsTrigger value="analytics">Analytiques</TabsTrigger>
-          <TabsTrigger value="reports">Rapports</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-        </TabsList>
-
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -241,10 +311,28 @@ export default function AdminDashboardPage() {
                 {isLoading ? (
                   <Skeleton className="h-[200px] w-full" />
                 ) : (
-                  <div className="h-[200px] w-full bg-muted rounded-md flex items-center justify-center">
-                    <p className="text-muted-foreground">
-                      Graphique des revenus
-                    </p>
+                  <div className="h-[200px] w-full bg-muted rounded-md p-2">
+                    {revenue.length === 0 ? (
+                      <p className="text-center text-muted-foreground">
+                        Aucune donnée disponible
+                      </p>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={revenue.map((item) => ({
+                            name: item.month,
+                            Revenus: item.total,
+                          }))}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="Revenus" fill="#074e6e" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -269,6 +357,27 @@ export default function AdminDashboardPage() {
                     <p className="text-center text-muted-foreground">
                       Liste des commandes récentes
                     </p>
+                    {Orders.map((order) => (
+                      <div
+                        key={order.id}
+                        className="flex items-center justify-between rounded-lg border p-4"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{order.nom}</span>
+                            <Badge
+                              variant="outline"
+                              className={getStatusBadgeColor(order.statut)}
+                            >
+                              {order.statut}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Client: {order.client.prenom} {order.client.nom}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>

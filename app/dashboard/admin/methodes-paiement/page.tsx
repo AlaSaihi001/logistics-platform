@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import {
   CreditCard,
   Plus,
@@ -13,11 +13,24 @@ import {
   DollarSign,
   AlertTriangle,
   Loader2,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +38,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -33,70 +46,77 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { toast } from "@/components/ui/use-toast"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "@/components/ui/use-toast";
 
 // Type definitions
 interface PaymentMethod {
-  id: string
-  nom: string
-  description: string
-  frais: string
-  fraisFixe: string
-  statut: "actif" | "inactif"
-  dateCreation: string
-  derniereMaj: string
+  id: string;
+  nom: string;
+  description: string;
+  frais: string;
+  fraisFixe: string;
+  statut: "actif" | "inactif";
+  dateCreation: string;
+  derniereMaj: string;
 }
 
 export default function PaymentMethodsPage() {
-  const [methods, setMethods] = useState<PaymentMethod[]>([])
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [currentMethod, setCurrentMethod] = useState<PaymentMethod | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [methods, setMethods] = useState<PaymentMethod[]>([]);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [currentMethod, setCurrentMethod] = useState<PaymentMethod | null>(
+    null
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [newMethod, setNewMethod] = useState({
     nom: "",
     description: "",
     frais: "",
     fraisFixe: "",
     statut: "actif",
-  })
+  });
 
   // Fetch payment methods from the backend
   useEffect(() => {
     const fetchPaymentMethods = async () => {
-      setIsLoading(true)
-      setError(null)
+      setIsLoading(true);
+      setError(null);
       try {
-        const response = await fetch("/api/admin/payment-methods")
+        const response = await fetch("/api/admin/payment-methods");
 
         if (!response.ok) {
-          throw new Error(`Erreur lors de la récupération des méthodes de paiement: ${response.status}`)
+          throw new Error(
+            `Erreur lors de la récupération des méthodes de paiement: ${response.status}`
+          );
         }
 
-        const data = await response.json()
-        setMethods(data)
+        const data = await response.json();
+        setMethods(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Une erreur est survenue")
+        setError(
+          err instanceof Error ? err.message : "Une erreur est survenue"
+        );
         toast({
           variant: "destructive",
           title: "Erreur",
-          description: "Impossible de charger les méthodes de paiement. Veuillez réessayer.",
-        })
+          description:
+            "Impossible de charger les méthodes de paiement. Veuillez réessayer.",
+        });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchPaymentMethods()
-  }, [])
+    fetchPaymentMethods();
+  }, []);
 
   const handleAddMethod = async () => {
     try {
@@ -106,16 +126,16 @@ export default function PaymentMethodsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(newMethod),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error(`Erreur lors de l'ajout: ${response.status}`)
+        throw new Error(`Erreur lors de l'ajout: ${response.status}`);
       }
 
-      const addedMethod = await response.json()
+      const addedMethod = await response.json();
 
       // Update local state
-      setMethods([...methods, addedMethod])
+      setMethods([...methods, addedMethod]);
 
       setNewMethod({
         nom: "",
@@ -123,133 +143,162 @@ export default function PaymentMethodsPage() {
         frais: "",
         fraisFixe: "",
         statut: "actif",
-      })
+      });
 
-      setIsAddDialogOpen(false)
+      setIsAddDialogOpen(false);
 
       toast({
         title: "Méthode ajoutée",
         description: "La méthode de paiement a été ajoutée avec succès.",
-      })
+      });
     } catch (err) {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible d'ajouter la méthode de paiement. Veuillez réessayer.",
-      })
+        description:
+          "Impossible d'ajouter la méthode de paiement. Veuillez réessayer.",
+      });
     }
-  }
+  };
 
   const handleEditMethod = async () => {
-    if (!currentMethod) return
+    if (!currentMethod) return;
 
     try {
-      const response = await fetch(`/api/admin/payment-methods/${currentMethod.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nom: currentMethod.nom,
-          description: currentMethod.description,
-          frais: currentMethod.frais,
-          fraisFixe: currentMethod.fraisFixe,
-          statut: currentMethod.statut,
-        }),
-      })
+      const response = await fetch(
+        `/api/admin/payment-methods/${currentMethod.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            nom: currentMethod.nom,
+            description: currentMethod.description,
+            frais: currentMethod.frais,
+            fraisFixe: currentMethod.fraisFixe,
+            statut: currentMethod.statut,
+          }),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error(`Erreur lors de la mise à jour: ${response.status}`)
+        throw new Error(`Erreur lors de la mise à jour: ${response.status}`);
       }
 
-      const updatedMethod = await response.json()
+      const updatedMethod = await response.json();
 
       // Update local state
-      setMethods(methods.map((method) => (method.id === currentMethod.id ? updatedMethod : method)))
+      setMethods(
+        methods.map((method) =>
+          method.id === currentMethod.id ? updatedMethod : method
+        )
+      );
 
-      setIsEditDialogOpen(false)
+      setIsEditDialogOpen(false);
 
       toast({
         title: "Méthode mise à jour",
         description: "La méthode de paiement a été mise à jour avec succès.",
-      })
+      });
     } catch (err) {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de mettre à jour la méthode de paiement. Veuillez réessayer.",
-      })
+        description:
+          "Impossible de mettre à jour la méthode de paiement. Veuillez réessayer.",
+      });
     }
-  }
+  };
 
   const handleDeleteMethod = async () => {
-    if (!currentMethod) return
+    if (!currentMethod) return;
 
     try {
-      const response = await fetch(`/api/admin/payment-methods/${currentMethod.id}`, {
-        method: "DELETE",
-      })
+      const response = await fetch(
+        `/api/admin/payment-methods/${currentMethod.id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
-        throw new Error(`Erreur lors de la suppression: ${response.status}`)
+        throw new Error(`Erreur lors de la suppression: ${response.status}`);
       }
 
       // Update local state
-      setMethods(methods.filter((method) => method.id !== currentMethod.id))
+      setMethods(methods.filter((method) => method.id !== currentMethod.id));
 
-      setIsDeleteDialogOpen(false)
+      setIsDeleteDialogOpen(false);
 
       toast({
         title: "Méthode supprimée",
         description: "La méthode de paiement a été supprimée avec succès.",
-      })
+      });
     } catch (err) {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de supprimer la méthode de paiement. Veuillez réessayer.",
-      })
+        description:
+          "Impossible de supprimer la méthode de paiement. Veuillez réessayer.",
+      });
     }
-  }
+  };
 
-  const handleToggleStatus = async (id: string, currentStatus: "actif" | "inactif") => {
+  const handleToggleStatus = async (
+    id: string,
+    currentStatus: "actif" | "inactif"
+  ) => {
     try {
-      const newStatus = currentStatus === "actif" ? "inactif" : "actif"
-
+      const newStatus = currentStatus === "actif" ? "inactif" : "actif";
+      console.log("Status", newStatus);
       const response = await fetch(`/api/admin/payment-methods/${id}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ status: newStatus }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error(`Erreur lors de la mise à jour du statut: ${response.status}`)
+        throw new Error(
+          `Erreur lors de la mise à jour du statut: ${response.status}`
+        );
       }
 
       // Update local state
-      setMethods(methods.map((method) => (method.id === id ? { ...method, statut: newStatus } : method)))
+      setMethods(
+        methods.map((method) =>
+          method.id === id ? { ...method, statut: newStatus } : method
+        )
+      );
 
       toast({
         title: "Statut mis à jour",
-        description: `La méthode de paiement a été ${newStatus === "actif" ? "activée" : "désactivée"} avec succès.`,
-      })
+        description: `La méthode de paiement a été ${
+          newStatus === "actif" ? "activée" : "désactivée"
+        } avec succès.`,
+      });
     } catch (err) {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de mettre à jour le statut. Veuillez réessayer.",
-      })
+        description:
+          "Impossible de mettre à jour le statut. Veuillez réessayer.",
+      });
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Méthodes de Paiement</h1>
-          <p className="text-muted-foreground">Gérez les méthodes de paiement disponibles sur la plateforme</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Méthodes de Paiement
+          </h1>
+          <p className="text-muted-foreground">
+            Gérez les méthodes de paiement disponibles sur la plateforme
+          </p>
         </div>
         <Button className="gap-2" onClick={() => setIsAddDialogOpen(true)}>
           <Plus className="h-4 w-4" />
@@ -261,8 +310,9 @@ export default function PaymentMethodsPage() {
         <AlertTriangle className="h-4 w-4" />
         <AlertTitle>Information</AlertTitle>
         <AlertDescription>
-          Les modifications des méthodes de paiement peuvent affecter les transactions en cours. Assurez-vous de
-          vérifier les impacts avant de désactiver une méthode.
+          Les modifications des méthodes de paiement peuvent affecter les
+          transactions en cours. Assurez-vous de vérifier les impacts avant de
+          désactiver une méthode.
         </AlertDescription>
       </Alert>
 
@@ -277,7 +327,9 @@ export default function PaymentMethodsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Liste des méthodes de paiement</CardTitle>
-          <CardDescription>Consultez et gérez toutes les méthodes de paiement disponibles</CardDescription>
+          <CardDescription>
+            Consultez et gérez toutes les méthodes de paiement disponibles
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border overflow-x-auto">
@@ -286,11 +338,19 @@ export default function PaymentMethodsPage() {
                 <TableRow>
                   <TableHead className="w-[100px]">ID</TableHead>
                   <TableHead>Nom</TableHead>
-                  <TableHead className="hidden md:table-cell">Description</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Description
+                  </TableHead>
                   <TableHead>Frais</TableHead>
-                  <TableHead className="hidden md:table-cell">Frais fixe</TableHead>
-                  <TableHead className="hidden md:table-cell">Date de création</TableHead>
-                  <TableHead className="hidden md:table-cell">Dernière mise à jour</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Frais fixe
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Date de création
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Dernière mise à jour
+                  </TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -321,7 +381,9 @@ export default function PaymentMethodsPage() {
                           {method.nom}
                         </div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">{method.description}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {method.description}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center">
                           <Percent className="h-3 w-3 mr-1 text-muted-foreground" />
@@ -334,15 +396,25 @@ export default function PaymentMethodsPage() {
                           {method.fraisFixe}
                         </div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">{method.dateCreation}</TableCell>
-                      <TableCell className="hidden md:table-cell">{method.derniereMaj}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {method.dateCreation}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {method.derniereMaj}
+                      </TableCell>
                       <TableCell>
                         {method.statut === "actif" ? (
-                          <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">
+                          <Badge
+                            variant="outline"
+                            className="bg-green-100 text-green-800 hover:bg-green-100"
+                          >
                             <CheckCircle className="mr-1 h-3 w-3" /> Actif
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-100">
+                          <Badge
+                            variant="outline"
+                            className="bg-gray-100 text-gray-800 hover:bg-gray-100"
+                          >
                             <XCircle className="mr-1 h-3 w-3" /> Inactif
                           </Badge>
                         )}
@@ -360,14 +432,18 @@ export default function PaymentMethodsPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => {
-                                setCurrentMethod(method)
-                                setIsEditDialogOpen(true)
+                                setCurrentMethod(method);
+                                setIsEditDialogOpen(true);
                               }}
                             >
                               <Edit className="mr-2 h-4 w-4" />
                               Modifier
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleToggleStatus(method.id, method.statut)}>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                handleToggleStatus(method.id, method.statut)
+                              }
+                            >
                               {method.statut === "actif" ? (
                                 <>
                                   <XCircle className="mr-2 h-4 w-4" />
@@ -384,8 +460,8 @@ export default function PaymentMethodsPage() {
                             <DropdownMenuItem
                               className="text-red-600"
                               onClick={() => {
-                                setCurrentMethod(method)
-                                setIsDeleteDialogOpen(true)
+                                setCurrentMethod(method);
+                                setIsDeleteDialogOpen(true);
                               }}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
@@ -408,7 +484,9 @@ export default function PaymentMethodsPage() {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Ajouter une méthode de paiement</DialogTitle>
-            <DialogDescription>Créez une nouvelle méthode de paiement pour la plateforme.</DialogDescription>
+            <DialogDescription>
+              Créez une nouvelle méthode de paiement pour la plateforme.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
@@ -418,7 +496,9 @@ export default function PaymentMethodsPage() {
               <Input
                 id="nom"
                 value={newMethod.nom}
-                onChange={(e) => setNewMethod({ ...newMethod, nom: e.target.value })}
+                onChange={(e) =>
+                  setNewMethod({ ...newMethod, nom: e.target.value })
+                }
                 className="col-span-3"
               />
             </div>
@@ -429,7 +509,9 @@ export default function PaymentMethodsPage() {
               <Textarea
                 id="description"
                 value={newMethod.description}
-                onChange={(e) => setNewMethod({ ...newMethod, description: e.target.value })}
+                onChange={(e) =>
+                  setNewMethod({ ...newMethod, description: e.target.value })
+                }
                 className="col-span-3"
               />
             </div>
@@ -441,7 +523,9 @@ export default function PaymentMethodsPage() {
                 <Input
                   id="frais"
                   value={newMethod.frais}
-                  onChange={(e) => setNewMethod({ ...newMethod, frais: e.target.value })}
+                  onChange={(e) =>
+                    setNewMethod({ ...newMethod, frais: e.target.value })
+                  }
                   className="w-full"
                 />
                 <Percent className="h-4 w-4 ml-2 text-muted-foreground" />
@@ -455,7 +539,9 @@ export default function PaymentMethodsPage() {
                 <Input
                   id="fraisFixe"
                   value={newMethod.fraisFixe}
-                  onChange={(e) => setNewMethod({ ...newMethod, fraisFixe: e.target.value })}
+                  onChange={(e) =>
+                    setNewMethod({ ...newMethod, fraisFixe: e.target.value })
+                  }
                   className="w-full"
                 />
                 <DollarSign className="h-4 w-4 ml-2 text-muted-foreground" />
@@ -468,7 +554,12 @@ export default function PaymentMethodsPage() {
               <Switch
                 id="statut"
                 checked={newMethod.statut === "actif"}
-                onCheckedChange={(checked) => setNewMethod({ ...newMethod, statut: checked ? "actif" : "inactif" })}
+                onCheckedChange={(checked) =>
+                  setNewMethod({
+                    ...newMethod,
+                    statut: checked ? "actif" : "inactif",
+                  })
+                }
               />
             </div>
           </div>
@@ -486,7 +577,9 @@ export default function PaymentMethodsPage() {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Modifier la méthode de paiement</DialogTitle>
-            <DialogDescription>Modifiez les détails de la méthode de paiement.</DialogDescription>
+            <DialogDescription>
+              Modifiez les détails de la méthode de paiement.
+            </DialogDescription>
           </DialogHeader>
           {currentMethod && (
             <div className="grid gap-4 py-4">
@@ -497,7 +590,9 @@ export default function PaymentMethodsPage() {
                 <Input
                   id="edit-nom"
                   value={currentMethod.nom}
-                  onChange={(e) => setCurrentMethod({ ...currentMethod, nom: e.target.value })}
+                  onChange={(e) =>
+                    setCurrentMethod({ ...currentMethod, nom: e.target.value })
+                  }
                   className="col-span-3"
                 />
               </div>
@@ -508,7 +603,12 @@ export default function PaymentMethodsPage() {
                 <Textarea
                   id="edit-description"
                   value={currentMethod.description}
-                  onChange={(e) => setCurrentMethod({ ...currentMethod, description: e.target.value })}
+                  onChange={(e) =>
+                    setCurrentMethod({
+                      ...currentMethod,
+                      description: e.target.value,
+                    })
+                  }
                   className="col-span-3"
                 />
               </div>
@@ -520,7 +620,12 @@ export default function PaymentMethodsPage() {
                   <Input
                     id="edit-frais"
                     value={currentMethod.frais}
-                    onChange={(e) => setCurrentMethod({ ...currentMethod, frais: e.target.value })}
+                    onChange={(e) =>
+                      setCurrentMethod({
+                        ...currentMethod,
+                        frais: e.target.value,
+                      })
+                    }
                     className="w-full"
                   />
                   <Percent className="h-4 w-4 ml-2 text-muted-foreground" />
@@ -534,7 +639,12 @@ export default function PaymentMethodsPage() {
                   <Input
                     id="edit-fraisFixe"
                     value={currentMethod.fraisFixe}
-                    onChange={(e) => setCurrentMethod({ ...currentMethod, fraisFixe: e.target.value })}
+                    onChange={(e) =>
+                      setCurrentMethod({
+                        ...currentMethod,
+                        fraisFixe: e.target.value,
+                      })
+                    }
                     className="w-full"
                   />
                   <DollarSign className="h-4 w-4 ml-2 text-muted-foreground" />
@@ -548,14 +658,20 @@ export default function PaymentMethodsPage() {
                   id="edit-statut"
                   checked={currentMethod.statut === "actif"}
                   onCheckedChange={(checked) =>
-                    setCurrentMethod({ ...currentMethod, statut: checked ? "actif" : "inactif" })
+                    setCurrentMethod({
+                      ...currentMethod,
+                      statut: checked ? "actif" : "inactif",
+                    })
                   }
                 />
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+            >
               Annuler
             </Button>
             <Button onClick={handleEditMethod}>Enregistrer</Button>
@@ -569,7 +685,8 @@ export default function PaymentMethodsPage() {
           <DialogHeader>
             <DialogTitle>Supprimer la méthode de paiement</DialogTitle>
             <DialogDescription>
-              Êtes-vous sûr de vouloir supprimer cette méthode de paiement ? Cette action est irréversible.
+              Êtes-vous sûr de vouloir supprimer cette méthode de paiement ?
+              Cette action est irréversible.
             </DialogDescription>
           </DialogHeader>
           {currentMethod && (
@@ -578,14 +695,18 @@ export default function PaymentMethodsPage() {
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Attention</AlertTitle>
                 <AlertDescription>
-                  La suppression de la méthode de paiement "{currentMethod.nom}" peut affecter les transactions en cours
-                  et les statistiques historiques.
+                  La suppression de la méthode de paiement "{currentMethod.nom}"
+                  peut affecter les transactions en cours et les statistiques
+                  historiques.
                 </AlertDescription>
               </Alert>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               Annuler
             </Button>
             <Button variant="destructive" onClick={handleDeleteMethod}>
@@ -595,5 +716,5 @@ export default function PaymentMethodsPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

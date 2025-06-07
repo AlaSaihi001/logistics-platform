@@ -5,11 +5,6 @@ import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
 
 interface SupplierRecipientProps {
-  supplier?: {
-    nom: string;
-    pays: string;
-    adresse: string;
-  };
   recipient?: {
     nomDestinataire: string;
     paysDestinataire: string;
@@ -22,14 +17,10 @@ interface SupplierRecipientProps {
 }
 
 export function SupplierRecipient({
-  supplier,
   recipient,
   onChange,
 }: SupplierRecipientProps) {
   const [details, setDetails] = useState({
-    nom: "",
-    pays: "",
-    adresse: "",
     nomDestinataire: "",
     paysDestinataire: "",
     adresseDestinataire: "",
@@ -39,11 +30,8 @@ export function SupplierRecipient({
   });
 
   useEffect(() => {
-    if (supplier || recipient) {
+    if (recipient) {
       setDetails({
-        nom: supplier?.nom || "",
-        pays: supplier?.pays || "",
-        adresse: supplier?.adresse || "",
         nomDestinataire: recipient?.nomDestinataire || "",
         paysDestinataire: recipient?.paysDestinataire || "",
         adresseDestinataire: recipient?.adresseDestinataire || "",
@@ -54,7 +42,7 @@ export function SupplierRecipient({
         emailDestinataire: recipient?.emailDestinataire || "",
       });
     }
-  }, [supplier, recipient]);
+  }, [recipient]);
 
   const handleChange = (key: string, value: string) => {
     const updated = { ...details, [key]: value };

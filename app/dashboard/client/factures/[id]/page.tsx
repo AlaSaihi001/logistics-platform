@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { loadStripe } from "@stripe/stripe-js";
 import {
   Download,
   Printer,
@@ -15,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
+import { useParams } from "next/navigation"; // 👈 This is the key
 // Assurez-vous de récupérer factureId de manière dynamique
 interface FactureDetails {
   id: number;
@@ -41,17 +42,22 @@ interface FactureDetails {
   updatedAt: string;
 }
 
-const FactureView = ({ factureId }: { factureId: number }) => {
+const FactureView = () => {
+  // 👈 Get factureId from dynamic route
   const [factureDetails, setFactureDetails] = useState<FactureDetails | null>(
     null
   );
-
+  const { id } = useParams();
+  const factureId = id;
+  console.log("FactureID:", factureId);
   useEffect(() => {
     // Utilisation correcte du factureId dans l'URL
     const fetchFactureDetails = async () => {
       try {
+        console.log("FactureID:", factureId);
         const response = await fetch(`/api/factures/${factureId}`);
         const data = await response.json();
+        console.log(data);
         if (response.ok) {
           setFactureDetails(data);
         } else {
@@ -88,7 +94,39 @@ const FactureView = ({ factureId }: { factureId: number }) => {
     Payée: "default",
     "En attente": "secondary",
   };
+  const stripePromise = loadStripe(
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
+  );
+  const handlePayment = async () => {
+    toast({
+      title: "Payer maintenant",
+      description: "Redirection vers la page de paiement...",
+    });
 
+    const res = await fetch("/api/stripe", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        amount: factureDetails.montant,
+        invoiceId: factureDetails.id,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.sessionId) {
+      const stripe = await stripePromise;
+      await stripe?.redirectToCheckout({ sessionId: data.sessionId });
+    } else {
+      toast({
+        title: "Erreur",
+        description: "La session de paiement n'a pas pu être créée.",
+        variant: "destructive",
+      });
+    }
+  };
   return (
     <div className="space-y-6 print:space-y-4">
       <div className="flex justify-between items-center print:hidden">
@@ -96,31 +134,46 @@ const FactureView = ({ factureId }: { factureId: number }) => {
           Facture {factureDetails.numeroFacture}
         </h1>
         <div className="flex space-x-2">
-          <Button
-            onClick={() =>
-              toast({
-                title: "Payer maintenant",
-                description: "Redirection vers la page de paiement...",
-              })
-            }
-            variant="default"
-          >
+          <Button onClick={handlePayment} variant="default">
             <CreditCard className="mr-2 h-4 w-4" />
             Payer maintenant
           </Button>
           <Button
-            onClick={() =>
+            onClick={() => {
+              // Show toast
               toast({
                 title: "Téléchargement démarré",
                 description: `La facture ${factureDetails.numeroFacture} est en cours de téléchargement.`,
-              })
-            }
+              });
+
+              // Trigger file download
+              const link = document.createElement("a");
+              link.href = factureDetails.document;
+              link.download = ""; // optional: you can also set a filename here
+              link.target = "_blank";
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
             variant="outline"
           >
             <Download className="mr-2 h-4 w-4" />
             Télécharger
           </Button>
-          <Button onClick={() => window.print()} variant="outline">
+          <Button
+            onClick={() => {
+              const iframe = document.createElement("iframe");
+              iframe.style.display = "none";
+              iframe.src = factureDetails.document;
+              document.body.appendChild(iframe);
+
+              iframe.onload = () => {
+                iframe.contentWindow?.focus();
+                iframe.contentWindow?.print();
+              };
+            }}
+            variant="outline"
+          >
             <Printer className="mr-2 h-4 w-4" />
             Imprimer
           </Button>
@@ -182,8 +235,8 @@ const FactureView = ({ factureId }: { factureId: number }) => {
         </div>
         <div className="mt-8">
           <h3 className="font-semibold">Facturé à:</h3>
-          <p>{factureDetails.client.name}</p>
-          <p>{factureDetails.client.email}</p>
+          <p>{factureDetails.client?.name}</p>
+          <p>{factureDetails.client?.email}</p>
         </div>
       </div>
 

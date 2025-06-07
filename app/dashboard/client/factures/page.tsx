@@ -40,6 +40,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "@/components/ui/use-toast";
 import { formatDate } from "@/lib/utils";
 import { StatusBadge } from "@/components/status-badge";
+import { useParams } from "next/navigation";
 
 interface Invoice {
   id: string;
@@ -47,6 +48,7 @@ interface Invoice {
   dateEmission: string;
   montant: number;
   status: string;
+  document: string;
   commande: {
     id: string;
     nom: string;
@@ -56,8 +58,33 @@ interface Invoice {
     statut: string;
   } | null;
 }
-
+interface FactureDetails {
+  id: number;
+  idCommande: number;
+  idClient: number;
+  numeroFacture: number;
+  montant: number | null;
+  dateEmission: string;
+  status: string;
+  commande: {
+    nom: string;
+    adresse: string;
+  };
+  client: {
+    name: string;
+    email: string;
+  };
+  paiement: {
+    montant: number;
+    datePaiement: string;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+}
 export default function FacturesPage() {
+  const [factureDetails, setFactureDetails] = useState<FactureDetails | null>(
+    null
+  );
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +93,41 @@ export default function FacturesPage() {
   const [processingPayment, setProcessingPayment] = useState<string | null>(
     null
   );
+    const { id } = useParams();
+  const factureId = id;
 
+  useEffect(() => {
+    // Utilisation correcte du factureId dans l'URL
+    const fetchFactureDetails = async () => {
+      try {
+        console.log("FactureID:", factureId);
+        const response = await fetch(`/api/factures/${factureId}`);
+        const data = await response.json();
+        console.log(data);
+        if (response.ok) {
+          setFactureDetails(data);
+        } else {
+          toast({
+            title: "Erreur",
+            description: data.error,
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching invoice:", error);
+        toast({
+          title: "Erreur serveur",
+          description: "Impossible de charger la facture.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    // Vérifiez si factureId est défini avant de faire la requête
+    if (factureId) {
+      fetchFactureDetails();
+    }
+  }, [factureId]);
   const fetchInvoices = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -82,7 +143,7 @@ export default function FacturesPage() {
       }
 
       const data = await response.json();
-
+      console.log(data);
       // Format the data
       const formattedInvoices = data.map((invoice: any) => ({
         id: invoice.id.toString(),
@@ -90,6 +151,7 @@ export default function FacturesPage() {
         dateEmission: formatDate(invoice.dateEmission),
         montant: invoice.montant,
         status: invoice.status,
+        document: invoice.document,
         commande: {
           id: invoice.commande.id.toString(),
           nom: invoice.commande.nom,
@@ -119,7 +181,36 @@ export default function FacturesPage() {
       setLoading(false);
     }
   }, []);
+  const handlePayment = async () => {
+    toast({
+      title: "Payer maintenant",
+      description: "Redirection vers la page de paiement...",
+    });
 
+    const res = await fetch("/api/stripe", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        amount: factureDetails.montant,
+        invoiceId: factureDetails.id,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.sessionId) {
+      const stripe = await stripePromise;
+      await stripe?.redirectToCheckout({ sessionId: data.sessionId });
+    } else {
+      toast({
+        title: "Erreur",
+        description: "La session de paiement n'a pas pu être créée.",
+        variant: "destructive",
+      });
+    }
+  };
   useEffect(() => {
     fetchInvoices();
   }, [fetchInvoices]);
@@ -197,7 +288,7 @@ export default function FacturesPage() {
     setSearchTerm("");
     setStatusFilter("all");
   };
-
+  console.log("Invoices:", invoices[0]);
   return (
     <div className="space-y-8">
       <div>
@@ -317,19 +408,23 @@ export default function FacturesPage() {
                               Détails
                             </Button>
                           </Link>
-                          <Button variant="outline" size="sm">
-                            <Download className="h-4 w-4 mr-2" />
-                            PDF
-                          </Button>
+                          <a
+                            href={invoice.document}
+                            download
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button variant="outline" size="sm">
+                              <Download className="h-4 w-4 mr-2" />
+                              PDF
+                            </Button>
+                          </a>
                           {(invoice.status === "En attente" ||
                             invoice.status === "En retard") &&
                             !invoice.paiement && (
-                              <Button
-                                size="sm"
-                                onClick={() => initiatePayment(invoice.id)}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                                disabled={processingPayment === invoice.id}
-                              >
+                              <Button onClick={handlePayment} variant="default">
+                                <CreditCard className="mr-2 h-4 w-4" />
+                                Payer maintenant
                                 <CreditCard className="h-4 w-4 mr-2" />
                                 {processingPayment === invoice.id
                                   ? "Traitement..."

@@ -1,65 +1,107 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect, useCallback } from "react"
-import { User, Mail, Phone, Lock, Save, Bell, LogOut } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Switch } from "@/components/ui/switch"
-import { useToast } from "@/components/ui/use-toast"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useState, useEffect, useCallback } from "react";
+import { User, Mail, Phone, Lock, Save, Bell, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/components/ui/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 // Import custom JWT methods
-import { signOutCustom } from "@/lib/jwt-utils" // Custom signOut function
-import { useAuthSession } from "@/hooks/use-auth-session"
+//import { signOutCustom } from "@/lib/jwt-utils"; // Custom signOut function
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface AssistantProfile {
-  id: number
-  nom: string
-  prenom: string
-  email: string
-  telephone: number
-  indicatifPaysTelephone: string
-  image: string | null
+  id: number;
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: number;
+  indicatifPaysTelephone: string;
+  image: string | null;
 }
 
 export default function ProfilPage() {
-  const { user, isLoading, requireAuth } = useAuthSession()
-  const { toast } = useToast()
-  const [loading, setLoading] = useState(true)
-  const [profile, setProfile] = useState<AssistantProfile | null>(null)
+  const { user, isLoading, requireAuth } = useAuthSession();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<AssistantProfile | null>(null);
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
     email: "",
     telephone: "",
     indicatifPaysTelephone: "",
-  })
+  });
 
   const [password, setPassword] = useState({
     current: "",
     new: "",
     confirm: "",
-  })
+  });
 
-  const [notificationsEmail, setNotificationsEmail] = useState(true)
-  const [avatarFile, setAvatarFile] = useState<File | null>(null)
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
-  const [isAuthorized, setIsAuthorized] = useState(false)
+  const [notificationsEmail, setNotificationsEmail] = useState(true);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   // Check authentication and role
-  const checkAuthorization = useCallback(() => {
-    setIsAuthorized(requireAuth(["ASSISTANT"]))
-  }, [requireAuth])
+  const checkAuthorization = useCallback(async () => {
+    try {
+      setIsAuthorized(await requireAuth(["ASSISTANT"]));
+    } catch (error) {
+      setError("Erreur d'authentification. Veuillez vous reconnecter.");
+      console.error("Authentication error:", error);
+    }
+  }, [requireAuth]);
+  useEffect(() => {
+    checkAuthorization();
+  }, [checkAuthorization]);
 
   useEffect(() => {
-    checkAuthorization()
-  }, [checkAuthorization])
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch("/api/assistant/profile");
+        if (!response.ok)
+          throw new Error("Erreur lors du chargement du profil");
 
+        const data = await response.json();
+        setProfile(data);
+        setFormData({
+          nom: data.nom,
+          prenom: data.prenom,
+          email: data.email,
+          telephone: data.telephone.toString(),
+          indicatifPaysTelephone: data.indicatifPaysTelephone,
+        });
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger votre profil",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [toast, isAuthorized]);
   // If still loading or not authorized, show loading state
   if (isLoading || !isAuthorized) {
     return (
@@ -67,66 +109,34 @@ export default function ProfilPage() {
         <Skeleton className="h-12 w-1/3" />
         <Skeleton className="h-[600px] w-full" />
       </div>
-    )
+    );
   }
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch("/api/assistant/profile")
-        if (!response.ok) throw new Error("Erreur lors du chargement du profil")
-
-        const data = await response.json()
-        setProfile(data)
-        setFormData({
-          nom: data.nom,
-          prenom: data.prenom,
-          email: data.email,
-          telephone: data.telephone.toString(),
-          indicatifPaysTelephone: data.indicatifPaysTelephone,
-        })
-      } catch (error) {
-        console.error("Error fetching profile:", error)
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger votre profil",
-          variant: "destructive",
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchProfile()
-  }, [toast, isAuthorized])
-
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setPassword((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setPassword((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      setAvatarFile(file)
+      const file = e.target.files[0];
+      setAvatarFile(file);
 
       // Create preview
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onloadend = () => {
-        setAvatarPreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
       const response = await fetch("/api/assistant/profile", {
         method: "PUT",
@@ -137,37 +147,39 @@ export default function ProfilPage() {
           ...formData,
           telephone: Number.parseInt(formData.telephone),
         }),
-      })
+      });
 
-      if (!response.ok) throw new Error("Erreur lors de la mise à jour du profil")
+      if (!response.ok)
+        throw new Error("Erreur lors de la mise à jour du profil");
 
-      const updatedProfile = await response.json()
-      setProfile(updatedProfile)
+      const updatedProfile = await response.json();
+      setProfile(updatedProfile);
 
       toast({
         title: "Profil mis à jour",
-        description: "Vos informations personnelles ont été mises à jour avec succès.",
-      })
+        description:
+          "Vos informations personnelles ont été mises à jour avec succès.",
+      });
     } catch (error) {
-      console.error("Error updating profile:", error)
+      console.error("Error updating profile:", error);
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour votre profil",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (password.new !== password.confirm) {
       toast({
         title: "Erreur",
         description: "Les mots de passe ne correspondent pas.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     try {
@@ -180,31 +192,34 @@ export default function ProfilPage() {
           currentPassword: password.current,
           newPassword: password.new,
         }),
-      })
+      });
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Erreur lors du changement de mot de passe")
+        const error = await response.json();
+        throw new Error(
+          error.error || "Erreur lors du changement de mot de passe"
+        );
       }
 
       toast({
         title: "Mot de passe changé",
         description: "Votre mot de passe a été modifié avec succès.",
-      })
-      setPassword({ current: "", new: "", confirm: "" })
+      });
+      setPassword({ current: "", new: "", confirm: "" });
     } catch (error: any) {
-      console.error("Error changing password:", error)
+      console.error("Error changing password:", error);
       toast({
         title: "Erreur",
-        description: error.message || "Impossible de changer votre mot de passe",
+        description:
+          error.message || "Impossible de changer votre mot de passe",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const handleLogout = () => {
-    signOutCustom() // Custom sign-out function
-  }
+    //signOutCustom(); // Custom sign-out function
+  };
 
   if (loading) {
     return (
@@ -212,14 +227,16 @@ export default function ProfilPage() {
         <Skeleton className="h-12 w-1/3" />
         <Skeleton className="h-[600px] w-full" />
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Profil</h1>
-        <p className="text-muted-foreground">Gérez vos informations personnelles et vos paramètres</p>
+        <p className="text-muted-foreground">
+          Gérez vos informations personnelles et vos paramètres
+        </p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
@@ -231,7 +248,11 @@ export default function ProfilPage() {
             <div className="relative mb-4">
               <Avatar className="h-24 w-24 border-4 border-background">
                 <AvatarImage
-                  src={avatarPreview || profile?.image || "/placeholder.svg?height=96&width=96"}
+                  src={
+                    avatarPreview ||
+                    profile?.image ||
+                    "/placeholder.svg?height=96&width=96"
+                  }
                   alt={`${profile?.prenom} ${profile?.nom}`}
                 />
                 <AvatarFallback className="bg-primary/10 text-primary text-xl">
@@ -246,7 +267,13 @@ export default function ProfilPage() {
                 <User className="h-4 w-4" />
                 <span className="sr-only">Changer l'avatar</span>
               </label>
-              <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+              <input
+                id="avatar-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
             </div>
             <h3 className="text-xl font-bold">
               {profile?.prenom} {profile?.nom}
@@ -255,7 +282,9 @@ export default function ProfilPage() {
             <div className="mt-6 space-y-3 w-full text-left">
               <div className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
                 <Mail className="h-5 w-5 text-primary" />
-                <span className="text-sm sm:text-base break-all">{profile?.email}</span>
+                <span className="text-sm sm:text-base break-all">
+                  {profile?.email}
+                </span>
               </div>
               <div className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
                 <Phone className="h-5 w-5 text-primary" />
@@ -265,7 +294,11 @@ export default function ProfilPage() {
               </div>
             </div>
             <div className="mt-6 w-full">
-              <Button variant="destructive" className="w-full" onClick={handleLogout}>
+              <Button
+                variant="destructive"
+                className="w-full"
+                onClick={handleLogout}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Déconnexion
               </Button>
@@ -277,9 +310,10 @@ export default function ProfilPage() {
           <Tabs defaultValue="informations" className="space-y-4">
             <div className="overflow-x-auto pb-2">
               <TabsList>
-                <TabsTrigger value="informations">Informations personnelles</TabsTrigger>
+                <TabsTrigger value="informations">
+                  Informations personnelles
+                </TabsTrigger>
                 <TabsTrigger value="securite">Sécurité</TabsTrigger>
-                <TabsTrigger value="notifications">Notifications</TabsTrigger>
               </TabsList>
             </div>
 
@@ -287,7 +321,9 @@ export default function ProfilPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Informations personnelles</CardTitle>
-                  <CardDescription>Mettez à jour vos informations personnelles</CardDescription>
+                  <CardDescription>
+                    Mettez à jour vos informations personnelles
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleProfileSubmit}>
@@ -295,11 +331,21 @@ export default function ProfilPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="prenom">Prénom</Label>
-                          <Input id="prenom" name="prenom" value={formData.prenom} onChange={handleProfileChange} />
+                          <Input
+                            id="prenom"
+                            name="prenom"
+                            value={formData.prenom}
+                            onChange={handleProfileChange}
+                          />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="nom">Nom</Label>
-                          <Input id="nom" name="nom" value={formData.nom} onChange={handleProfileChange} />
+                          <Input
+                            id="nom"
+                            name="nom"
+                            value={formData.nom}
+                            onChange={handleProfileChange}
+                          />
                         </div>
                       </div>
                       <div className="space-y-2">
@@ -344,7 +390,9 @@ export default function ProfilPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Sécurité</CardTitle>
-                  <CardDescription>Mettez à jour votre mot de passe</CardDescription>
+                  <CardDescription>
+                    Mettez à jour votre mot de passe
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handlePasswordSubmit}>
@@ -370,7 +418,9 @@ export default function ProfilPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="confirm">Confirmer le nouveau mot de passe</Label>
+                        <Label htmlFor="confirm">
+                          Confirmer le nouveau mot de passe
+                        </Label>
                         <Input
                           id="confirm"
                           name="confirm"
@@ -393,16 +443,20 @@ export default function ProfilPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Paramètres de notification</CardTitle>
-                  <CardDescription>Gérez vos préférences de notification</CardDescription>
+                  <CardDescription>
+                    Gérez vos préférences de notification
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <Label htmlFor="notifications-email">Notifications par email</Label>
+                        <Label htmlFor="notifications-email">
+                          Notifications par email
+                        </Label>
                         <p className="text-sm text-muted-foreground">
-                          Recevez des notifications par email pour les nouvelles commandes, factures et tickets de
-                          support.
+                          Recevez des notifications par email pour les nouvelles
+                          commandes, factures et tickets de support.
                         </p>
                       </div>
                       <Switch
@@ -414,9 +468,12 @@ export default function ProfilPage() {
 
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <Label htmlFor="notifications-urgentes">Notifications urgentes</Label>
+                        <Label htmlFor="notifications-urgentes">
+                          Notifications urgentes
+                        </Label>
                         <p className="text-sm text-muted-foreground">
-                          Recevez des notifications prioritaires pour les demandes urgentes.
+                          Recevez des notifications prioritaires pour les
+                          demandes urgentes.
                         </p>
                       </div>
                       <Switch id="notifications-urgentes" defaultChecked />
@@ -424,9 +481,12 @@ export default function ProfilPage() {
 
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <Label htmlFor="notifications-resume">Résumé quotidien</Label>
+                        <Label htmlFor="notifications-resume">
+                          Résumé quotidien
+                        </Label>
                         <p className="text-sm text-muted-foreground">
-                          Recevez un résumé quotidien des activités de la plateforme.
+                          Recevez un résumé quotidien des activités de la
+                          plateforme.
                         </p>
                       </div>
                       <Switch id="notifications-resume" defaultChecked />
@@ -444,5 +504,5 @@ export default function ProfilPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

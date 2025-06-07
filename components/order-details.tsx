@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,48 +20,85 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { fr } from "date-fns/locale";
-import { useState, useEffect } from "react";
 
 interface OrderDetailsProps {
-  order: any;
+  supplier?: {
+    nom: string;
+    pays: string;
+    adresse: string;
+  };
+  recipient?: {
+    nomDestinataire: string;
+    paysDestinataire: string;
+    adresseDestinataire: string;
+    indicatifTelephoneDestinataire: string;
+    telephoneDestinataire: string;
+    emailDestinataire: string;
+  };
+  orderDetails?: {
+    valeurMarchandise: number;
+    typeCommande: string;
+    typeTransport: string;
+    ecoterme: string;
+    modePaiement: string;
+    dateDePickup: Date | string;
+  };
   onChange: (details: any) => void;
 }
 
-export function OrderDetails({ order, onChange }: OrderDetailsProps) {
-  // Initialize state with proper checks to avoid accessing undefined properties
+export function OrderDetails({
+  supplier,
+  recipient,
+  orderDetails,
+  onChange,
+}: OrderDetailsProps) {
   const [details, setDetails] = useState({
-    nom: order?.nom || "",
-    pays: order?.pays || "",
-    adresse: order?.adresse || "",
-    valeurMarchandise: order?.valeurMarchandise || 0,
-    typeCommande: order?.typeCommande || "",
-    typeTransport: order?.typeTransport || "",
-    ecoterme: order?.ecoterme || "",
-    modePaiement: order?.modePaiement || "",
-    dateDePickup: order?.dateDePickup
-      ? new Date(order.dateDePickup)
-      : new Date(),
+    nom: "",
+    pays: "",
+    adresse: "",
+    nomDestinataire: "",
+    paysDestinataire: "",
+    adresseDestinataire: "",
+    indicatifTelephoneDestinataire: "",
+    telephoneDestinataire: "",
+    emailDestinataire: "",
+    valeurMarchandise: 0,
+    typeCommande: "",
+    typeTransport: "",
+    ecoterme: "",
+    modePaiement: "",
+    dateDePickup: new Date(),
   });
 
   useEffect(() => {
-    if (order) {
+    if (supplier || recipient || orderDetails) {
       setDetails({
-        nom: order?.nom || "",
-        pays: order?.pays || "",
-        adresse: order?.adresse || "",
-        valeurMarchandise: order?.valeurMarchandise || 0,
-        typeCommande: order?.typeCommande || "",
-        typeTransport: order?.typeTransport || "",
-        ecoterme: order?.ecoterme || "",
-        modePaiement: order?.modePaiement || "",
-        dateDePickup: order?.dateDePickup
-          ? new Date(order.dateDePickup)
+        nom: supplier?.nom || "",
+        pays: supplier?.pays || "",
+        adresse: supplier?.adresse || "",
+        nomDestinataire: recipient?.nomDestinataire || "",
+        paysDestinataire: recipient?.paysDestinataire || "",
+        adresseDestinataire: recipient?.adresseDestinataire || "",
+        indicatifTelephoneDestinataire:
+          recipient?.indicatifTelephoneDestinataire || "",
+        telephoneDestinataire: recipient?.telephoneDestinataire || "",
+        emailDestinataire: recipient?.emailDestinataire || "",
+        valeurMarchandise: orderDetails?.valeurMarchandise || 0,
+        typeCommande: orderDetails?.typeCommande || "",
+        typeTransport: orderDetails?.typeTransport || "",
+        ecoterme: orderDetails?.ecoterme || "",
+        modePaiement: orderDetails?.modePaiement || "",
+        dateDePickup: orderDetails?.dateDePickup
+          ? orderDetails.dateDePickup instanceof Date
+            ? orderDetails.dateDePickup
+            : new Date(orderDetails.dateDePickup)
           : new Date(),
       });
     }
-  }, [order]);
+  }, [supplier, recipient, orderDetails]);
 
   const handleChange = (key: string, value: any) => {
+    console.log("OrderDetails handleChange:", key, value);
     const updated = { ...details, [key]: value };
     setDetails(updated);
     onChange(updated);
@@ -142,7 +180,7 @@ export function OrderDetails({ order, onChange }: OrderDetailsProps) {
       <div className="space-y-2">
         <Label>Type de commande</Label>
         <RadioGroup
-          defaultValue={details.typeCommande}
+          value={details.typeCommande}
           onValueChange={(value) => handleChange("typeCommande", value)}
         >
           <div className="flex items-center space-x-2">
@@ -159,7 +197,7 @@ export function OrderDetails({ order, onChange }: OrderDetailsProps) {
       <div className="space-y-2">
         <Label>Type de transport</Label>
         <RadioGroup
-          defaultValue={details.typeTransport}
+          value={details.typeTransport}
           onValueChange={(value) => handleChange("typeTransport", value)}
         >
           <div className="flex items-center space-x-2">

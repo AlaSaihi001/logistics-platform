@@ -80,27 +80,45 @@ export default function LoginPage() {
     }
   }, [user, searchParams, router]);
 
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSuccessMessage(null);
-  
-    if (!validateForm()) {
-      return;
-    }
-  
+    setValidationErrors({}); // clear errors
+
+    if (!validateForm()) return;
+
     try {
-      await login(email, password);
+      const success = await login(email, password);
+
+      if (success) {
+        setSuccessMessage("Connexion réussie !");
+        toast({
+          title: "Bienvenue !",
+          description: "Connexion réussie.",
+        });
+        // Add navigation here if needed
+      } else {
+        // Set a generic error on email or password field
+        setValidationErrors({
+          email: "Email ou mot de passe incorrect",
+          password: "Email ou mot de passe incorrect",
+        });
+        toast({
+          title: "Erreur",
+          description: "Email ou mot de passe incorrect.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
-      console.error("Login failed", error);
+      console.error("Login failed:", error);
       toast({
-        title: "Erreur",
-        description: "Impossible de se connecter, veuillez réessayer.",
+        title: "Erreur inattendue",
+        description:
+          "Une erreur est survenue pendant la tentative de connexion.",
         variant: "destructive",
       });
     }
   };
-  
 
   // Redirect if already logged in
   // useEffect(() => {

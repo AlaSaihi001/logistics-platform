@@ -1,67 +1,114 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { Search, Filter, FileText, Eye } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { StatusBadge } from "@/components/status-badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/components/ui/use-toast"
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Search, Filter, FileText, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { StatusBadge } from "@/components/status-badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
 
-// Types for our data
+interface Client {
+  id: number;
+  nom: string;
+  prenom: string;
+  email: string;
+}
+
 interface Commande {
-  id: string
-  client: string
-  nom: string
-  adresseDepart: string
-  adresseDestination: string
-  dateCommande: string
-  modeTransport: string
-  status: string
+  id: number;
+  clientId: number;
+  assistantId: number;
+  agentId: number;
+  nom: string;
+  pays: string;
+  adresse: string;
+  dateDePickup: string | Date;
+  dateArrivage: string;
+  valeurMarchandise: number;
+  typeCommande: string;
+  typeTransport: string;
+  ecoterme: string;
+  modePaiement: string;
+  nomDestinataire: string;
+  paysDestinataire: string;
+  adresseDestinataire: string;
+  indicatifTelephoneDestinataire: string;
+  telephoneDestinataire: number;
+  emailDestinataire: string;
+  statut: string;
+  adresseActuel: string;
+  dateCommande: string | Date;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  notes: Record<string, string>; // or `{ [key: string]: string }`
+  client: Client;
+  produits: any[]; // Define a proper Product interface if needed
 }
 
 export default function CommandesPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [transportFilter, setTransportFilter] = useState("all")
-  const [commandes, setCommandes] = useState<Commande[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [transportFilter, setTransportFilter] = useState("all");
+  const [commandes, setCommandes] = useState<Commande[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Fetch commandes data
   useEffect(() => {
     const fetchCommandes = async () => {
-      setIsLoading(true)
-      setError(null)
+      setIsLoading(true);
+      setError(null);
 
       try {
-        const response = await fetch("/api/agent/commandes")
+        const response = await fetch("/api/agent/commandes");
 
         if (!response.ok) {
-          throw new Error("Failed to fetch orders")
+          throw new Error("Failed to fetch orders");
         }
 
-        const data = await response.json()
-        setCommandes(data)
+        const data = await response.json();
+        setCommandes(data);
       } catch (err) {
-        console.error("Error fetching orders:", err)
-        setError("Une erreur est survenue lors du chargement des commandes. Veuillez réessayer.")
+        console.error("Error fetching orders:", err);
+        setError(
+          "Une erreur est survenue lors du chargement des commandes. Veuillez réessayer."
+        );
         toast({
           variant: "destructive",
           title: "Erreur de chargement",
           description: "Impossible de charger les commandes.",
-        })
+        });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchCommandes()
-  }, [toast])
+    fetchCommandes();
+  }, [toast]);
 
   // Fallback data for development/demo purposes
   const fallbackCommandes = [
@@ -115,32 +162,38 @@ export default function CommandesPage() {
       modeTransport: "aerien",
       status: "refusee",
     },
-  ]
+  ];
 
   // Use fallback data if loading or error
-  const displayCommandes = isLoading || error ? fallbackCommandes : commandes
+  const displayCommandes = isLoading || error ? fallbackCommandes : commandes;
 
   // Filtrer les commandes en fonction des critères
   const filteredCommandes = displayCommandes.filter((commande) => {
     const matchesSearch =
-      commande.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      commande.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      commande.id.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+      commande.client.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
       commande.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      commande.adresseDepart.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      commande.adresseDestination.toLowerCase().includes(searchTerm.toLowerCase())
+      commande.adresse.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      commande.adresseDestinataire
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || commande.status === statusFilter
-    const matchesTransport = transportFilter === "all" || commande.modeTransport === transportFilter
+    const matchesStatus =
+      statusFilter === "all" || commande.statut === statusFilter;
+    const matchesTransport =
+      transportFilter === "all" || commande.typeTransport === transportFilter;
 
-    return matchesSearch && matchesStatus && matchesTransport
-  })
+    return matchesSearch && matchesStatus && matchesTransport;
+  });
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Commandes</h1>
-          <p className="text-muted-foreground">Gérez les commandes de transport et logistique</p>
+          <p className="text-muted-foreground">
+            Gérez les commandes de transport et logistique
+          </p>
         </div>
       </div>
 
@@ -148,7 +201,11 @@ export default function CommandesPage() {
         <Card className="border-red-200 bg-red-50">
           <CardContent className="p-4">
             <p className="text-red-600">{error}</p>
-            <Button variant="outline" className="mt-2" onClick={() => window.location.reload()}>
+            <Button
+              variant="outline"
+              className="mt-2"
+              onClick={() => window.location.reload()}
+            >
               Réessayer
             </Button>
           </CardContent>
@@ -158,7 +215,9 @@ export default function CommandesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Liste des commandes</CardTitle>
-          <CardDescription>Consultez et gérez toutes les commandes</CardDescription>
+          <CardDescription>
+            Consultez et gérez toutes les commandes
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
@@ -181,14 +240,17 @@ export default function CommandesPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="en-attente">En attente</SelectItem>
-                  <SelectItem value="acceptee">Acceptée</SelectItem>
+                  <SelectItem value="En attente">En attente</SelectItem>
+                  <SelectItem value="Validée">Acceptée</SelectItem>
                   <SelectItem value="refusee">Refusée</SelectItem>
                   <SelectItem value="expediee">Expédiée</SelectItem>
                   <SelectItem value="livree">Livrée</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={transportFilter} onValueChange={setTransportFilter}>
+              <Select
+                value={transportFilter}
+                onValueChange={setTransportFilter}
+              >
                 <SelectTrigger className="w-full md:w-[180px]">
                   <SelectValue placeholder="Mode de transport" />
                 </SelectTrigger>
@@ -214,7 +276,9 @@ export default function CommandesPage() {
                   <TableHead>Client</TableHead>
                   <TableHead className="hidden md:table-cell">Nom</TableHead>
                   <TableHead className="hidden lg:table-cell">Départ</TableHead>
-                  <TableHead className="hidden lg:table-cell">Destination</TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Destination
+                  </TableHead>
                   <TableHead className="hidden md:table-cell">Date</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -263,35 +327,57 @@ export default function CommandesPage() {
                 ) : (
                   filteredCommandes.map((commande) => (
                     <TableRow key={commande.id}>
-                      <TableCell className="font-medium">{commande.id}</TableCell>
-                      <TableCell>{commande.client}</TableCell>
-                      <TableCell className="hidden md:table-cell">{commande.nom}</TableCell>
-                      <TableCell className="hidden lg:table-cell">{commande.adresseDepart}</TableCell>
-                      <TableCell className="hidden lg:table-cell">{commande.adresseDestination}</TableCell>
-                      <TableCell className="hidden md:table-cell">{commande.dateCommande}</TableCell>
+                      <TableCell className="font-medium">
+                        {commande.id.toString()}
+                      </TableCell>
+                      <TableCell>{commande.client.nom}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {commande.nom}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {commande.adresse}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {commande.adresseDestinataire}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {commande.dateCommande}
+                      </TableCell>
                       <TableCell>
-                        <StatusBadge status={commande.status as any} />
+                        <StatusBadge
+                          status={
+                            commande.statut === "Validée"
+                              ? "Acceptée"
+                              : commande.statut
+                          }
+                        />
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2 flex-wrap">
                           <Button variant="outline" size="sm" asChild>
-                            <Link href={`/dashboard/agent/commande/${commande.id}`}>
+                            <Link
+                              href={`/dashboard/agent/commande/${commande.id}`}
+                            >
                               <Eye className="h-4 w-4 mr-1" />
                               <span className="hidden sm:inline">Détails</span>
                             </Link>
                           </Button>
-                          {(commande.status === "acceptee" ||
-                            commande.status === "expediee" ||
-                            commande.status === "livree") && (
+                          {(commande.statut === "Validée" ||
+                            commande.statut === "expediee" ||
+                            commande.statut === "livree") && (
                             <Button
                               variant="outline"
                               size="sm"
                               className="gap-1 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:text-blue-700"
                               asChild
                             >
-                              <Link href={`/dashboard/agent/factures?commande=${commande.id}`}>
+                              <Link
+                                href={`/dashboard/agent/factures?commande=${commande.id}`}
+                              >
                                 <FileText className="h-4 w-4" />
-                                <span className="hidden sm:inline">Facture</span>
+                                <span className="hidden sm:inline">
+                                  Facture
+                                </span>
                               </Link>
                             </Button>
                           )}
@@ -306,5 +392,5 @@ export default function CommandesPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

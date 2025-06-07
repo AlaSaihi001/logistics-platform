@@ -52,6 +52,7 @@ export default function ProfilePage() {
     indicatifPaysTelephone: "",
     telephone: "",
     image: "",
+    address: "",
   });
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -87,6 +88,7 @@ export default function ProfilePage() {
         indicatifPaysTelephone: data.indicatifPaysTelephone,
         telephone: data.telephone.toString(),
         image: data.image || "",
+        address: data.adresse || "",
       });
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -457,7 +459,25 @@ export default function ProfilePage() {
                       <p className="text-sm text-red-500">{formErrors.email}</p>
                     )}
                   </div>
-
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Address</Label>
+                    <div className="relative">
+                      <Input
+                        id="address"
+                        name="address"
+                        type="text"
+                        value={formData.address}
+                        onChange={handleChange}
+                        className={`pl-10 ${
+                          formErrors.email ? "border-red-500" : ""
+                        }`}
+                      />
+                      <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                    </div>
+                    {formErrors.email && (
+                      <p className="text-sm text-red-500">{formErrors.email}</p>
+                    )}
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="telephone">Numéro de téléphone</Label>
                     <div className="flex">

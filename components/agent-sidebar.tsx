@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
@@ -15,92 +15,92 @@ import {
   CreditCard,
   Loader2,
   RefreshCw,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useToast } from "@/components/ui/use-toast"
-import { useAuthSession } from "@/hooks/use-auth-session"
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 interface AgentSidebarProps {
-  className?: string
+  className?: string;
 }
 
 export function AgentSidebar({ className }: AgentSidebarProps) {
-  const pathname = usePathname()
-  const { user, isLoading, requireAuth } = useAuthSession()
-  const [isAuthorized, setIsAuthorized] = useState(false)
-  const [authError, setAuthError] = useState<string | null>(null)
+  const pathname = usePathname();
+  const { user, isLoading, requireAuth } = useAuthSession();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [agentStats, setAgentStats] = useState({
     pendingOrders: 0,
     pendingDocuments: 0,
     pendingInvoices: 0,
     unreadNotifications: 0,
-  })
-  const [statsLoading, setStatsLoading] = useState(true)
-  const [statsError, setStatsError] = useState<string | null>(null)
-  const { toast } = useToast()
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Check authentication and role
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const authorized = await requireAuth(["AGENT"])
-        setIsAuthorized(authorized)
-        setAuthError(null)
+        const authorized = await requireAuth(["AGENT"]);
+        setIsAuthorized(authorized);
+        setAuthError(null);
       } catch (error) {
-        console.error("Authentication error:", error)
-        setAuthError("Erreur d'authentification. Veuillez vous reconnecter.")
-        setIsAuthorized(false)
+        console.error("Authentication error:", error);
+        setAuthError("Erreur d'authentification. Veuillez vous reconnecter.");
+        setIsAuthorized(false);
       }
-    }
+    };
 
-    checkAuth()
-  }, [requireAuth])
+    checkAuth();
+  }, [requireAuth]);
 
   // Fetch agent quick stats for sidebar
   useEffect(() => {
     const fetchAgentStats = async () => {
-      if (!isAuthorized) return
+      if (!isAuthorized) return;
 
       try {
-        setStatsLoading(true)
-        setStatsError(null)
+        setStatsLoading(true);
+        setStatsError(null);
 
         const response = await fetch("/api/agent/dashboard/quick-stats", {
           headers: {
             "Cache-Control": "no-cache",
           },
-        })
+        });
 
         if (!response.ok) {
-          throw new Error("Erreur lors du chargement des statistiques")
+          throw new Error("Erreur lors du chargement des statistiques");
         }
 
-        const data = await response.json()
+        const data = await response.json();
         setAgentStats({
           pendingOrders: data.pendingOrders || 0,
           pendingDocuments: data.pendingDocuments || 0,
           pendingInvoices: data.pendingInvoices || 0,
           unreadNotifications: data.unreadNotifications || 0,
-        })
+        });
       } catch (error) {
-        console.error("Error fetching agent stats:", error)
-        setStatsError("Impossible de charger les statistiques")
+        console.error("Error fetching agent stats:", error);
+        setStatsError("Impossible de charger les statistiques");
       } finally {
-        setStatsLoading(false)
+        setStatsLoading(false);
       }
-    }
+    };
 
-    fetchAgentStats()
-  }, [isAuthorized])
+    fetchAgentStats();
+  }, [isAuthorized]);
 
   // Retry loading stats
   const retryLoadingStats = () => {
-    setStatsLoading(true)
-    setStatsError(null)
+    setStatsLoading(true);
+    setStatsError(null);
 
     fetch("/api/agent/dashboard/quick-stats", {
       headers: {
@@ -109,9 +109,9 @@ export function AgentSidebar({ className }: AgentSidebarProps) {
     })
       .then((response) => {
         if (!response.ok) {
-          throw new Error("Erreur lors du chargement des statistiques")
+          throw new Error("Erreur lors du chargement des statistiques");
         }
-        return response.json()
+        return response.json();
       })
       .then((data) => {
         setAgentStats({
@@ -119,29 +119,29 @@ export function AgentSidebar({ className }: AgentSidebarProps) {
           pendingDocuments: data.pendingDocuments || 0,
           pendingInvoices: data.pendingInvoices || 0,
           unreadNotifications: data.unreadNotifications || 0,
-        })
+        });
         toast({
           title: "Statistiques mises à jour",
           description: "Les statistiques ont été rechargées avec succès",
-        })
+        });
       })
       .catch((error) => {
-        console.error("Error retrying agent stats:", error)
-        setStatsError("Impossible de charger les statistiques")
+        console.error("Error retrying agent stats:", error);
+        setStatsError("Impossible de charger les statistiques");
         toast({
           variant: "destructive",
           title: "Erreur",
           description: "Impossible de recharger les statistiques",
-        })
+        });
       })
       .finally(() => {
-        setStatsLoading(false)
-      })
-  }
+        setStatsLoading(false);
+      });
+  };
 
   if (isLoading) {
     return (
-      <div className={cn("pb-12 w-full", className)}>
+      <div className={cn("pb-12 w-64", className)}>
         <div className="space-y-4 py-4">
           <div className="px-4 py-2">
             <Skeleton className="h-8 w-[150px]" />
@@ -159,12 +159,12 @@ export function AgentSidebar({ className }: AgentSidebarProps) {
             ))}
         </div>
       </div>
-    )
+    );
   }
 
   if (authError) {
     return (
-      <div className={cn("pb-12 w-full", className)}>
+      <div className={cn("pb-12 w-64", className)}>
         <div className="space-y-4 py-4 px-4">
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
@@ -175,15 +175,19 @@ export function AgentSidebar({ className }: AgentSidebarProps) {
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className={cn("pb-12 w-full", className)}>
+    <div className={cn("pb-12 w-64", className)}>
       <div className="space-y-4 py-4">
         <div className="px-4 py-2">
-          <h2 className="mb-2 px-2 text-xl font-semibold tracking-tight text-[#074e6e]">Agent Logistique</h2>
-          <p className="text-sm text-muted-foreground px-2 mb-6">Gestion des expéditions et documents</p>
+          <h2 className="mb-2 px-2 text-xl font-semibold tracking-tight text-[#074e6e]">
+            Agent Logistique
+          </h2>
+          <p className="text-sm text-muted-foreground px-2 mb-6">
+            Gestion des expéditions et documents
+          </p>
           <div className="space-y-1">
             <Button
               asChild
@@ -197,7 +201,11 @@ export function AgentSidebar({ className }: AgentSidebarProps) {
             </Button>
             <Button
               asChild
-              variant={pathname.includes("/dashboard/agent/commandes") ? "secondary" : "ghost"}
+              variant={
+                pathname.includes("/dashboard/agent/commandes")
+                  ? "secondary"
+                  : "ghost"
+              }
               className="w-full justify-start"
             >
               <Link href="/dashboard/agent/commandes">
@@ -212,7 +220,11 @@ export function AgentSidebar({ className }: AgentSidebarProps) {
             </Button>
             <Button
               asChild
-              variant={pathname.includes("/dashboard/agent/documents") ? "secondary" : "ghost"}
+              variant={
+                pathname.includes("/dashboard/agent/documents")
+                  ? "secondary"
+                  : "ghost"
+              }
               className="w-full justify-start"
             >
               <Link href="/dashboard/agent/documents">
@@ -227,7 +239,11 @@ export function AgentSidebar({ className }: AgentSidebarProps) {
             </Button>
             <Button
               asChild
-              variant={pathname.includes("/dashboard/agent/factures") ? "secondary" : "ghost"}
+              variant={
+                pathname.includes("/dashboard/agent/factures")
+                  ? "secondary"
+                  : "ghost"
+              }
               className="w-full justify-start"
             >
               <Link href="/dashboard/agent/factures">
@@ -242,7 +258,11 @@ export function AgentSidebar({ className }: AgentSidebarProps) {
             </Button>
             <Button
               asChild
-              variant={pathname.includes("/dashboard/agent/notifications") ? "secondary" : "ghost"}
+              variant={
+                pathname.includes("/dashboard/agent/notifications")
+                  ? "secondary"
+                  : "ghost"
+              }
               className="w-full justify-start"
             >
               <Link href="/dashboard/agent/notifications">
@@ -262,7 +282,9 @@ export function AgentSidebar({ className }: AgentSidebarProps) {
           <div className="px-6 py-2">
             <div className="flex items-center justify-center">
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              <span className="text-xs text-muted-foreground">Chargement des statistiques...</span>
+              <span className="text-xs text-muted-foreground">
+                Chargement des statistiques...
+              </span>
             </div>
           </div>
         )}
@@ -273,7 +295,12 @@ export function AgentSidebar({ className }: AgentSidebarProps) {
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription className="text-xs flex items-center justify-between">
                 <span>{statsError}</span>
-                <Button variant="ghost" size="sm" onClick={retryLoadingStats} className="h-6 px-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={retryLoadingStats}
+                  className="h-6 px-2"
+                >
                   <RefreshCw className="h-3 w-3" />
                 </Button>
               </AlertDescription>
@@ -283,21 +310,17 @@ export function AgentSidebar({ className }: AgentSidebarProps) {
 
         <Separator className="my-4" />
         <div className="px-4 py-2">
-          <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">Paramètres</h2>
+          <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">
+            Paramètres
+          </h2>
           <div className="space-y-1">
             <Button
               asChild
-              variant={pathname.includes("/dashboard/agent/parametres") ? "secondary" : "ghost"}
-              className="w-full justify-start"
-            >
-              <Link href="/dashboard/agent/parametres">
-                <Settings className="mr-2 h-4 w-4" />
-                Paramètres
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant={pathname.includes("/dashboard/agent/profil") ? "secondary" : "ghost"}
+              variant={
+                pathname.includes("/dashboard/agent/profil")
+                  ? "secondary"
+                  : "ghost"
+              }
               className="w-full justify-start"
             >
               <Link href="/dashboard/agent/profil">
@@ -319,5 +342,5 @@ export function AgentSidebar({ className }: AgentSidebarProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,73 +1,151 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { useSearchParams } from "next/navigation"
-import { Search, Filter, Download, Send, Bell } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { StatusBadge } from "@/components/status-badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/components/ui/use-toast"
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Search, Filter, Download, Send, Bell } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { StatusBadge } from "@/components/status-badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
 
 // Types for our data
-interface Facture {
-  id: string
-  expedition: string
-  client: string
-  amount: string
-  issueDate: string
-  dueDate: string
-  status: string
+export interface Client {
+  id: number;
+  nom: string;
+  prenom: string;
+  email: string;
+  indicatifPaysTelephone: string;
+  telephone: number;
+  motDePasse: string;
+  image: string | null;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Commande {
+  id: number;
+  clientId: number;
+  assistantId: number;
+  agentId: number;
+  nom: string;
+  pays: string;
+  adresse: string;
+  dateDePickup: string;
+  dateArrivage: string;
+  valeurMarchandise: number;
+  typeCommande: string;
+  typeTransport: string;
+  ecoterme: string;
+  modePaiement: string;
+  nomDestinataire: string;
+  paysDestinataire: string;
+  adresseDestinataire: string;
+  indicatifTelephoneDestinataire: string;
+  telephoneDestinataire: number;
+  emailDestinataire: string;
+  statut: string;
+  adresseActuel: string;
+  dateCommande: string;
+  createdAt: string;
+  updatedAt: string;
+  notes: any[]; // You can replace `any` with a more specific type if needed
+}
+
+export interface Facture {
+  id: number;
+  idCommande: number;
+  idClient: number;
+  idAgent: number;
+  document: string;
+  numeroFacture: number;
+  montant: number;
+  dateEmission: string;
+  status: string;
+  assistantId: number;
+  createdAt: string;
+  updatedAt: string;
+  client: Client;
+  commande: Commande;
 }
 
 export default function FacturesPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [factures, setFactures] = useState<Facture[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
-  const searchParams = useSearchParams()
-  const commandeFilter = searchParams.get("commande")
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [factures, setFactures] = useState<Facture[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const commandeFilter = searchParams.get("commande");
 
   // Fetch factures data
   useEffect(() => {
     const fetchFactures = async () => {
-      setIsLoading(true)
-      setError(null)
+      setIsLoading(true);
+      setError(null);
 
       try {
-        let url = "/api/agent/factures"
+        let url = "/api/agent/factures";
         if (commandeFilter) {
-          url += `?commande=${commandeFilter}`
+          url += `?commande=${commandeFilter}`;
         }
 
-        const response = await fetch(url)
+        const response = await fetch(url);
 
         if (!response.ok) {
-          throw new Error("Failed to fetch invoices")
+          throw new Error("Failed to fetch invoices");
         }
 
-        const data = await response.json()
-        setFactures(data)
+        const data = await response.json();
+        // ✅ Filter out factures with empty document values
+        const validFactures = data.filter(
+          (facture) =>
+            facture.document &&
+            facture.document !== '""' &&
+            facture.document.trim() !== ""
+        );
+        setFactures(validFactures);
       } catch (err) {
-        console.error("Error fetching invoices:", err)
-        setError("Une erreur est survenue lors du chargement des factures. Veuillez réessayer.")
+        console.error("Error fetching invoices:", err);
+        setError(
+          "Une erreur est survenue lors du chargement des factures. Veuillez réessayer."
+        );
         toast({
           variant: "destructive",
           title: "Erreur de chargement",
           description: "Impossible de charger les factures.",
-        })
+        });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchFactures()
-  }, [commandeFilter, toast])
+    fetchFactures();
+  }, [commandeFilter, toast]);
 
   // Fallback data for development/demo purposes
   const fallbackFactures = [
@@ -116,25 +194,27 @@ export default function FacturesPage() {
       dueDate: "08/04/2023",
       status: "en-attente",
     },
-  ]
+  ];
 
   // Use fallback data if loading or error
-  const displayFactures = isLoading || error ? fallbackFactures : factures
+  const displayFactures = isLoading || error ? fallbackFactures : factures;
 
   // Filter factures based on search term and status filter
   const filteredFactures = displayFactures.filter((facture) => {
     const matchesSearch =
-      facture.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      facture.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      facture.expedition.toLowerCase().includes(searchTerm.toLowerCase())
+      facture.id.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+      facture.client.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      facture.dateEmission.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || facture.status === statusFilter
+    const matchesStatus =
+      statusFilter === "all" || facture.status === statusFilter;
 
     // If there's a commande filter in the URL, only show factures for that commande
-    const matchesCommande = !commandeFilter || facture.expedition === commandeFilter
+    const matchesCommande =
+      !commandeFilter || facture.dateEmission === commandeFilter;
 
-    return matchesSearch && matchesStatus && matchesCommande
-  })
+    return matchesSearch && matchesStatus && matchesCommande;
+  });
 
   // Handle sending an invoice
   const handleSendInvoice = async (factureId: string) => {
@@ -145,68 +225,78 @@ export default function FacturesPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ action: "envoyer" }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to send invoice")
+        throw new Error("Failed to send invoice");
       }
 
       toast({
         title: "Facture envoyée",
         description: "La facture a été envoyée au client avec succès.",
-      })
+      });
 
       // Update the local state to reflect the change
       setFactures((prevFactures) =>
-        prevFactures.map((facture) => (facture.id === factureId ? { ...facture, status: "en-attente" } : facture)),
-      )
+        prevFactures.map((facture) =>
+          facture.id.toString() === factureId
+            ? { ...facture, status: "Envoyée" }
+            : facture
+        )
+      );
     } catch (err) {
-      console.error("Error sending invoice:", err)
+      console.error("Error sending invoice:", err);
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Impossible d'envoyer la facture. Veuillez réessayer.",
-      })
+      });
     }
-  }
+  };
 
   // Handle reminding a client about an overdue invoice
   const handleRemindClient = async (factureId: string) => {
     try {
       const response = await fetch(`/api/agent/factures/${factureId}/remind`, {
         method: "POST",
-      })
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to send reminder")
+        throw new Error("Failed to send reminder");
       }
 
       toast({
         title: "Rappel envoyé",
         description: "Un rappel a été envoyé au client.",
-      })
+      });
     } catch (err) {
-      console.error("Error sending reminder:", err)
+      console.error("Error sending reminder:", err);
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Impossible d'envoyer le rappel. Veuillez réessayer.",
-      })
+      });
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Factures</h1>
-        <p className="text-muted-foreground">Gérez les factures des expéditions</p>
+        <p className="text-muted-foreground">
+          Gérez les factures des expéditions
+        </p>
       </div>
 
       {error && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="p-4">
             <p className="text-red-600">{error}</p>
-            <Button variant="outline" className="mt-2" onClick={() => window.location.reload()}>
+            <Button
+              variant="outline"
+              className="mt-2"
+              onClick={() => window.location.reload()}
+            >
               Réessayer
             </Button>
           </CardContent>
@@ -216,7 +306,9 @@ export default function FacturesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Liste des factures</CardTitle>
-          <CardDescription>Consultez et gérez toutes les factures</CardDescription>
+          <CardDescription>
+            Consultez et gérez toutes les factures
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
@@ -239,7 +331,7 @@ export default function FacturesPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="en-attente">En attente</SelectItem>
+                  <SelectItem value="En attente">En attente</SelectItem>
                   <SelectItem value="payee">Payée</SelectItem>
                   <SelectItem value="en-retard">En retard</SelectItem>
                 </SelectContent>
@@ -257,10 +349,16 @@ export default function FacturesPage() {
                 <TableRow>
                   <TableHead className="w-[120px]">Numéro</TableHead>
                   <TableHead>Client</TableHead>
-                  <TableHead className="hidden md:table-cell">Expédition</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Expédition
+                  </TableHead>
                   <TableHead>Montant</TableHead>
-                  <TableHead className="hidden lg:table-cell">Date d'émission</TableHead>
-                  <TableHead className="hidden lg:table-cell">Date d'échéance</TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Date d'émission
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Date d'échéance
+                  </TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -308,30 +406,57 @@ export default function FacturesPage() {
                 ) : (
                   filteredFactures.map((facture) => (
                     <TableRow key={facture.id}>
-                      <TableCell className="font-medium">{facture.id}</TableCell>
-                      <TableCell>{facture.client}</TableCell>
-                      <TableCell className="hidden md:table-cell">{facture.expedition}</TableCell>
-                      <TableCell>{facture.amount}</TableCell>
-                      <TableCell className="hidden lg:table-cell">{facture.issueDate}</TableCell>
-                      <TableCell className="hidden lg:table-cell">{facture.dueDate}</TableCell>
+                      <TableCell className="font-medium">
+                        {facture.id}
+                      </TableCell>
+                      <TableCell>{facture.client.nom}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {facture.dateEmission}
+                      </TableCell>
+                      <TableCell>{facture.montant}</TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {facture.createdAt}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {facture.updatedAt}
+                      </TableCell>
                       <TableCell>
                         <StatusBadge status={facture.status as any} />
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2 flex-wrap">
                           <Button variant="outline" size="sm" asChild>
-                            <Link href={`/dashboard/agent/factures/${facture.id}`}>Voir</Link>
+                            <Link
+                              href={`/dashboard/agent/factures/${facture.id}`}
+                            >
+                              Voir
+                            </Link>
                           </Button>
-                          <Button variant="outline" size="sm" className="gap-1">
-                            <Download className="h-4 w-4" />
-                            <span className="hidden sm:inline">PDF</span>
-                          </Button>
-                          {facture.status === "en-attente" && (
+                          {facture.document && facture.document !== '""' && (
+                            <a
+                              href={facture.document}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download
+                            >
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-1"
+                              >
+                                <Download className="h-4 w-4" />
+                                <span className="hidden sm:inline">PDF</span>
+                              </Button>
+                            </a>
+                          )}
+                          {facture.status === "En attente" && (
                             <Button
                               variant="outline"
                               size="sm"
                               className="gap-1 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:text-blue-700"
-                              onClick={() => handleSendInvoice(facture.id)}
+                              onClick={() =>
+                                handleSendInvoice(facture.id.toString())
+                              }
                             >
                               <Send className="h-4 w-4" />
                               <span className="hidden sm:inline">Envoyer</span>
@@ -359,5 +484,5 @@ export default function FacturesPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

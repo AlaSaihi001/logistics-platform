@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromToken } from "@/lib/jwt-utils"; // JWT helper to extract user
 import { ApiResponse } from "@/lib/api-response";
-import prisma from "@/lib/prisma";  // Importer Prisma pour interagir avec la base de données
+import prisma from "@/lib/prisma"; // Importer Prisma pour interagir avec la base de données
 
 // export async function GET(req: NextRequest) {
 //   try {
@@ -27,16 +27,16 @@ export async function GET(req: NextRequest) {
     // Récupérer l'utilisateur via JWT
     const user = await getUserFromToken(req);
 
-    if (!user || user.role !== "ADMIN") {
+    if (!user || user.role !== "ASSISTANT") {
       return ApiResponse.error("Non autorisé", { status: 403 });
     }
 
     // Récupérer tous les assistants
-    const assistants = await prisma.assistant.findMany({
-      select: { /* Same as above */ }
+    const agents = await prisma.agent.findMany({
+      select: { id: true, nom: true, adresse: true },
     });
-
-    return NextResponse.json(assistants);
+    console.log(agents);
+    return NextResponse.json(agents);
   } catch (error) {
     console.error("Erreur lors de la récupération des assistants:", error);
     return ApiResponse.serverError("Erreur interne.");
