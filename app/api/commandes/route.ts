@@ -61,6 +61,7 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
+
 export async function POST(req: NextRequest) {
   try {
     const user = await getUserFromToken(req);
@@ -101,7 +102,7 @@ export async function POST(req: NextRequest) {
         adresseActuel: body.adresse,
         dateArrivage: "test",
         clientId: clientId,
-        assistantId: 112,
+        assistantId: 2,
         notes: {},
         produits: {
           create: body.produits.map((produit: any) => ({
@@ -132,7 +133,6 @@ export async function POST(req: NextRequest) {
         correspond: `Votre commande ${newOrder.nom} a été créée avec succès.`,
         lu: false,
         clientId: clientId,
-        assistantId: 112,
       },
     });
 

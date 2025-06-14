@@ -262,7 +262,7 @@ export default function SupportAndClaimsPage() {
                 </div>
                 <div className="flex items-center">
                   <Mail className="h-5 w-5 mr-2" />
-                  <span>support@logitech.com</span>
+                  <span>support@cargoexpress.com</span>
                 </div>
               </div>
             </div>
@@ -314,7 +314,7 @@ export default function SupportAndClaimsPage() {
             <TableHead>Sujet</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Statut</TableHead>
-            <TableHead>Actions</TableHead>
+            {/* <TableHead>Actions</TableHead> */}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -333,9 +333,9 @@ export default function SupportAndClaimsPage() {
                 </Badge>
               </TableCell>
               <TableCell>
-                <Button variant="outline" size="sm" asChild>
+                {/* <Button variant="outline" size="sm" asChild>
                   <a href={`/dashboard/client/support/${claim.id}`}>Détails</a>
-                </Button>
+                </Button> */}
               </TableCell>
             </TableRow>
           ))}

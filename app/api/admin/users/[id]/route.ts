@@ -106,13 +106,89 @@ export async function GET(
       telephone: user.telephone,
       type: userRole,
       dateInscription: new Date(user.createdAt).toLocaleDateString("fr-FR"),
-      statut: user.active ? "actif" : "inactif",
       image: user.image,
     };
 
     return NextResponse.json(formattedUser);
   } catch (error) {
     console.error("Error fetching user details:", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}
+
+
+// PUT /api/admin/users/[id] - Update user details
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const token = req.headers.get("Authorization")?.split(" ")[1];
+    if (!token) {
+      return NextResponse.json({ error: "Token manquant" }, { status: 401 });
+    }
+
+    const decoded = verifyToken(token);
+
+    if (decoded.role !== "ADMIN") {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+    }
+
+    const userId = params.id;
+    const [userType, idStr] = userId.split("-");
+    const id = Number.parseInt(idStr);
+
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "ID invalide" }, { status: 400 });
+    }
+
+    const body = await req.json();
+
+    // Construction des données à mettre à jour
+    const updateData: any = {
+      prenom: body.prenom,
+      nom: body.nomFamille,
+      email: body.email,
+      adresse: body.adresse,
+      indicatifPaysTelephone: body.indicatifPaysTelephone,
+      telephone: body.telephone,
+      image: body.image,
+    };
+
+    let updatedUser;
+
+    switch (userType) {
+      case "CLI":
+        updatedUser = await prisma.client.update({
+          where: { id },
+          data: updateData,
+        });
+        break;
+      case "AGT":
+        updatedUser = await prisma.agent.update({
+          where: { id },
+          data: updateData,
+        });
+        break;
+      case "AST":
+        updatedUser = await prisma.assistant.update({
+          where: { id },
+          data: updateData,
+        });
+        break;
+      case "ADM":
+        updatedUser = await prisma.administrateur.update({
+          where: { id },
+          data: updateData,
+        });
+        break;
+      default:
+        return NextResponse.json({ error: "Type d'utilisateur invalide" }, { status: 400 });
+    }
+
+    return NextResponse.json({ message: "Utilisateur mis à jour", user: updatedUser });
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour :", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

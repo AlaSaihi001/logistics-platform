@@ -156,7 +156,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     // 🔥 Assistant role
-    else if (role === "ASSISTANT") {
+    else if (role === "ASSISTANT" || role === "AGENT") {
       const assistantId = Number.parseInt(user.id);
 
       const updatedOrder = await prisma.commande.update({
@@ -238,7 +238,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       });
 
       return Response.json(cancelledOrder);
-    } else if (role === "ASSISTANT") {
+    } else if (role === "ASSISTANT" || role === "AGENT") {
       const rejectedOrder = await prisma.commande.update({
         where: { id: orderId },
         data: {

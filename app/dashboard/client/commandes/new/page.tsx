@@ -344,6 +344,10 @@ export default function NewOrderPage() {
                       <SelectItem value="FOB">FOB</SelectItem>
                       <SelectItem value="CIF">CIF</SelectItem>
                       <SelectItem value="EXW">EXW</SelectItem>
+                      <SelectItem value="DAP">DAP</SelectItem>
+                      <SelectItem value="DPU">DPU</SelectItem>
+                      <SelectItem value="DDP">DDP</SelectItem>
+                      <SelectItem value="CPT">CPT</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

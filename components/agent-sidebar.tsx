@@ -218,25 +218,7 @@ export function AgentSidebar({ className }: AgentSidebarProps) {
                 )}
               </Link>
             </Button>
-            <Button
-              asChild
-              variant={
-                pathname.includes("/dashboard/agent/documents")
-                  ? "secondary"
-                  : "ghost"
-              }
-              className="w-full justify-start"
-            >
-              <Link href="/dashboard/agent/documents">
-                <FileText className="mr-2 h-4 w-4" />
-                Documents
-                {!statsLoading && agentStats.pendingDocuments > 0 && (
-                  <span className="ml-auto bg-[#074e6e] text-white text-xs rounded-full px-2 py-0.5">
-                    {agentStats.pendingDocuments}
-                  </span>
-                )}
-              </Link>
-            </Button>
+            
             <Button
               asChild
               variant={

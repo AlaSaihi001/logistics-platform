@@ -394,10 +394,7 @@ export default function CommandesPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full md:w-[300px]"
               />
-              <Button variant="outline" size="icon">
-                <Search className="h-4 w-4" />
-                <span className="sr-only">Rechercher</span>
-              </Button>
+              
             </div>
             <div className="flex flex-wrap gap-2 w-full md:w-auto">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -407,6 +404,9 @@ export default function CommandesPage() {
                 <SelectContent>
                   <SelectItem value="all">Tous les statuts</SelectItem>
                   <SelectItem value="En attente">En attente</SelectItem>
+                  <SelectItem value="Validée par l'assistant">
+                    Validée par l'assistant
+                  </SelectItem>
                   <SelectItem value="acceptee">Acceptée</SelectItem>
                   <SelectItem value="refusee">Refusée</SelectItem>
                   <SelectItem value="Expédiée">Expédiée</SelectItem>
@@ -427,29 +427,6 @@ export default function CommandesPage() {
                   ))}
                 </SelectContent>
               </Select>
-
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full md:w-auto justify-start text-left font-normal"
-                  >
-                    <Calendar className="mr-2 h-4 w-4" />
-                    {dateFilter
-                      ? format(dateFilter, "dd/MM/yyyy")
-                      : "Filtrer par date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={dateFilter}
-                    onSelect={setDateFilter}
-                    initialFocus
-                    locale={fr}
-                  />
-                </PopoverContent>
-              </Popover>
 
               <Button
                 variant="outline"

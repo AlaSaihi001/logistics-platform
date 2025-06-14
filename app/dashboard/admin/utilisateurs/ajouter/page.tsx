@@ -269,7 +269,7 @@ export default function AddUserPage() {
                   </Select>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                {/* <div className="flex items-center space-x-2">
                   <Checkbox
                     id="sendCredentials"
                     checked={sendCredentials}
@@ -278,7 +278,7 @@ export default function AddUserPage() {
                   <Label htmlFor="sendCredentials">
                     Envoyer les identifiants par email
                   </Label>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
 

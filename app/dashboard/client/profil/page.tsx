@@ -337,6 +337,17 @@ export default function ProfilePage() {
       </div>
     );
   }
+  
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setFormData((prev) => ({
+        ...prev,
+        image: imageUrl,
+      }));
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -381,13 +392,21 @@ export default function ProfilePage() {
                           <User className="h-12 w-12 text-muted-foreground" />
                         )}
                       </div>
-                      <button
-                        type="button"
-                        className="absolute bottom-0 right-0 rounded-full bg-primary p-2 text-white shadow-sm"
-                      >
-                        <Camera className="h-4 w-4" />
-                        <span className="sr-only">Changer la photo</span>
-                      </button>
+                      <div className="relative">
+                        <input
+                          id="image"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleImageChange}
+                        />
+                        <label
+                          htmlFor="image"
+                          className="absolute bottom-0 right-0 rounded-full bg-primary p-2 text-white shadow-sm cursor-pointer"
+                        >
+                          <Camera className="h-4 w-4" />
+                        </label>
+                      </div>
                     </div>
                     <div>
                       <h3 className="text-lg font-medium">Photo de profil</h3>

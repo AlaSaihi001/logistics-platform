@@ -130,12 +130,7 @@ export default function RegisterPage() {
     // Attempt registration
     const success = await register(formData);
     if (success) {
-      router.push(
-        "/dashboard/client?message=" +
-          encodeURIComponent(
-            "Inscription réussie! Bienvenue sur Cargo Express."
-          )
-      );
+      router.push("/dashboard/client?message=");
     } else {
       setValidationErrors((prev) => ({
         ...prev,

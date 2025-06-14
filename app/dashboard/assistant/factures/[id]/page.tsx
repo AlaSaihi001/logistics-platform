@@ -367,31 +367,6 @@ export default function FactureDetailsPage() {
               </div>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <CreditCard className="h-5 w-5 text-primary" />
-                Coordonnées bancaires
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="p-3 rounded-lg bg-muted/50">
-                <p className="text-sm text-muted-foreground">IBAN</p>
-                <p className="font-mono font-medium break-all">
-                  {fakeBankInfo.iban}
-                </p>
-              </div>
-              <div className="p-3 rounded-lg bg-muted/50">
-                <p className="text-sm text-muted-foreground">BIC</p>
-                <p className="font-mono font-medium">{fakeBankInfo.bic}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-muted/50">
-                <p className="text-sm text-muted-foreground">Banque</p>
-                <p className="font-medium">{fakeBankInfo.banque}</p>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
 

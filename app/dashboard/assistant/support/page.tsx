@@ -352,7 +352,7 @@ export default function SupportPage() {
       // Update local state
       setTicketsList(
         ticketsList.map((ticket) =>
-          ticket.id.toString() === id ? { ...ticket, status: "resolu" } : ticket
+          ticket.id.toString() === id ? ticket : ticket
         )
       );
 
@@ -470,7 +470,7 @@ export default function SupportPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="En attente">En attente</SelectItem>
+                  <SelectItem value="Ouverte">Ouverte</SelectItem>
                   <SelectItem value="résolu">Résolu</SelectItem>
                 </SelectContent>
               </Select>
@@ -558,9 +558,8 @@ export default function SupportPage() {
                             </Link>
                           </Button>
 
-                          {ticketsList.map((ticket) => (
-                            <div key={ticket.id}>
-                              {/* your ticket info here */}
+                          {ticket.status === "Ouverte" && (
+                            <div>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -570,9 +569,9 @@ export default function SupportPage() {
                                 Répondre
                               </Button>
                             </div>
-                          ))}
+                          )}
 
-                          {ticket.status === "En attente" && (
+                          {ticket.status === "Ouverte" && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button

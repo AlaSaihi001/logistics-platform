@@ -94,94 +94,8 @@ export default function FinancialReportPage() {
           <h1 className="text-3xl font-bold tracking-tight">Rapport Financier</h1>
           <p className="text-muted-foreground">Analyse détaillée des données financières</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Select value={period} onValueChange={setPeriod} disabled={useCustomDateRange}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="Période" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7j">7 jours</SelectItem>
-              <SelectItem value="30j">30 jours</SelectItem>
-              <SelectItem value="90j">90 jours</SelectItem>
-              <SelectItem value="1a">1 an</SelectItem>
-            </SelectContent>
-          </Select>
-          <DateRangePicker dateRange={dateRange} onDateRangeChange={handleDateRangeChange} />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                Exporter <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>
-                <Download className="mr-2 h-4 w-4" /> PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Download className="mr-2 h-4 w-4" /> Excel
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Share2 className="mr-2 h-4 w-4" /> Partager
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        
       </div>
-
-      {/* Filtres */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Filtres</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4">
-            <div className="w-full sm:w-auto">
-              <Select value={service} onValueChange={setService}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Service" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les services</SelectItem>
-                  <SelectItem value="maritime">Transport Maritime</SelectItem>
-                  <SelectItem value="air">Transport Aérien</SelectItem>
-                  <SelectItem value="road">Transport Routier</SelectItem>
-                  <SelectItem value="warehouse">Entreposage</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-full sm:w-auto">
-              <Select value={client} onValueChange={setClient}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Client" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les clients</SelectItem>
-                  <SelectItem value="tech">TechGlobal</SelectItem>
-                  <SelectItem value="pharma">MediPharma</SelectItem>
-                  <SelectItem value="retail">FashionRetail</SelectItem>
-                  <SelectItem value="auto">AutoParts</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-full sm:w-auto">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Rechercher..."
-                  className="w-full sm:w-[300px] pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-            <Button variant="outline" size="sm" className="ml-auto" onClick={resetFilters}>
-              <Filter className="mr-2 h-4 w-4" />
-              Réinitialiser les filtres
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Loading state */}
       {isLoading && (
@@ -577,17 +491,6 @@ export default function FinancialReportPage() {
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="border-t bg-muted/20 flex justify-between">
-              <Button variant="outline" asChild>
-                <Link href="/dashboard/admin/rapports">Retour aux rapports</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/dashboard/admin/rapports/financiers/export">
-                  <Download className="mr-2 h-4 w-4" />
-                  Exporter le rapport complet
-                </Link>
-              </Button>
-            </CardFooter>
           </Card>
         </>
       )}

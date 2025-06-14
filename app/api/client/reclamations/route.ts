@@ -56,42 +56,47 @@ export async function POST(req: NextRequest) {
   try {
     const user = await getUserFromToken(req);
 
-    // Vérification si l'utilisateur est un client
     if (!user || user.role !== "CLIENT") {
       return Response.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const clientId = Number.parseInt(user.id); // Récupération de l'ID du client
-    const body = await req.json(); // Récupération du corps de la requête JSON
+    const clientId = Number.parseInt(user.id);
 
-    // Si des pièces jointes sont présentes, on les traite
-    const documents = body.attachments && body.attachments.length
-      ? body.attachments.map((doc: any) => [doc.name, doc.url]) // Création du tableau [nom, url] pour chaque document
+    const assistant = await prisma.assistant.findUnique({
+      where: { id: 2 },
+    });
+    const assistantId = Number.parseInt(assistant.id);
+
+    const body = await req.json();
+
+    const documents = body.attachments && body.attachments.length()? body.attachments.map((doc: any) => [doc.name, doc.url])
       : null;
 
-    // Création de la réclamation dans la base de données
     const newClaim = await prisma.reclamation.create({
       data: {
-        idClient: clientId, // Association avec le client
-        sujet: body.claimType, // Le type de réclamation
-        description: body.description, // Description de la réclamation
-        documents: documents ? JSON.stringify(documents) : null, // On associe les documents sous forme de tableau
-        status: "Ouverte", // Par défaut, une réclamation commence avec le statut "Ouverte"
-        date: new Date(), // La date de la réclamation est la date actuelle
+        idClient: clientId,
+        assistantId: 2,
+        sujet: body.claimType,
+        description: body.description,
+        documents: documents,
+        status: "Ouverte",
+        date: new Date(),
       },
     });
 
-    // Création d'une notification pour informer l'utilisateur de la réclamation
+   // Créer une notification pour l'assistant
     await prisma.notification.create({
       data: {
-        type: "reclamation", // Type de notification
-        correspond: `Une nouvelle réclamation a été créée: ${newClaim.sujet}.`, // Message de notification
-        lu: false, // L'état de la notification (non lue)
-        clientId: clientId, // ID du client pour associer la notification à ce client
+        type: "reclamation",
+        correspond: `Votre réclamation "${newClaim.sujet}" a été créée avec succès.`,
+        lu: false,
+        assistantId,
+        clientId, // Remplacez 2 par l'ID de l'assistant
       },
     });
 
-    // Retour de la réclamation nouvellement créée avec un statut 201 (créé avec succès)
+
+
     return Response.json(newClaim, { status: 201 });
   } catch (error) {
     console.error("Error creating claim:", error);

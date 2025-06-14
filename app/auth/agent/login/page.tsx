@@ -19,8 +19,8 @@ import { toast } from "@/components/ui/use-toast";
 import Link from "next/link";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("ad@m.m");
-  const [password, setPassword] = useState("admin123!!!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{
     email?: string;

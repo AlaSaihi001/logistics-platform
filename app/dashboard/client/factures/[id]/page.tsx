@@ -177,19 +177,6 @@ const FactureView = () => {
             <Printer className="mr-2 h-4 w-4" />
             Imprimer
           </Button>
-          <Button
-            onClick={() =>
-              toast({
-                title: "Partage",
-                description:
-                  "Fonctionnalité de partage en cours de développement.",
-              })
-            }
-            variant="outline"
-          >
-            <Share2 className="mr-2 h-4 w-4" />
-            Partager
-          </Button>
         </div>
       </div>
 

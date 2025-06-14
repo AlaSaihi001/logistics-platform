@@ -200,52 +200,8 @@ export default function NotificationsPage() {
 
         <div className="flex flex-col space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <Tabs
-              defaultValue="all"
-              className="w-full sm:w-auto"
-              onValueChange={setActiveTab}
-            >
-              <TabsList>
-                <TabsTrigger value="all">Toutes</TabsTrigger>
-                <TabsTrigger value="unread">
-                  Non lues{" "}
-                  {unreadCount > 0 && (
-                    <Badge className="ml-2 bg-primary">{unreadCount}</Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="read">Lues</TabsTrigger>
-              </TabsList>
-            </Tabs>
-
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <div className="relative w-full sm:w-auto">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Rechercher..."
-                  className="w-full sm:w-[250px] pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
               <div className="flex gap-2">
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <div className="flex items-center gap-2">
-                      <Filter className="h-4 w-4" />
-                      <SelectValue placeholder="Filtrer par type" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous les types</SelectItem>
-                    <SelectItem value="commande">Commandes</SelectItem>
-                    <SelectItem value="support">Support</SelectItem>
-                    <SelectItem value="facture">Factures</SelectItem>
-                    <SelectItem value="système">Système</SelectItem>
-                  </SelectContent>
-                </Select>
-
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon">

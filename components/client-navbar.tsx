@@ -61,7 +61,6 @@ export function ClientNavbar() {
       {/* Modifier la section des boutons dans la div "ml-auto flex items-center gap-2" */}
       {/* Ajouter le ThemeToggle avant les autres boutons */}
       <div className="ml-auto flex items-center gap-2">
-        <ThemeToggle />
         <Link href="/dashboard/client/notifications">
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
@@ -76,13 +75,6 @@ export function ClientNavbar() {
               </Badge>
             )}
             <span className="sr-only">Notifications</span>
-          </Button>
-        </Link>
-
-        <Link href="/dashboard/client/support">
-          <Button variant="ghost" size="icon">
-            <HelpCircle className="h-5 w-5" />
-            <span className="sr-only">Support</span>
           </Button>
         </Link>
       </div>

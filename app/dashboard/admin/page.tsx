@@ -195,10 +195,6 @@ export default function AdminDashboardPage() {
         <h1 className="text-3xl font-bold tracking-tight">
           Tableau de bord administrateur
         </h1>
-        <DateRangePicker
-          value={["2023-01-01", "2023-12-31"]}
-          onChange={handleDateRangeChange}
-        />
       </div>
 
       {error && (

@@ -153,6 +153,14 @@ const calculateSubtotal = (products) => {
   }, 0);
 };
 
+function InputField({ label, id, type = "text", ...props }) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} name={id} type={type} {...props} />
+    </div>
+  );
+}
 // Fonction pour calculer la TVA
 const calculateTVA = (subtotal, rate) => {
   return subtotal * (rate / 100);
@@ -182,7 +190,7 @@ export default function CommandeDetailsPage() {
   const statusSteps = [
     { id: "En attente", label: "En attente" },
     { id: "Validée Par Assistant", label: "Validée Par Assistant" },
-    { id: "Validée", label: "Acceptée" },
+    { id: "Acceptée", label: "Acceptée" },
     { id: "Expédiée", label: "Expédiée" },
     { id: "Livrée", label: "Livrée" },
   ];
@@ -393,8 +401,8 @@ export default function CommandeDetailsPage() {
 
       setStatus("Acceptée");
       toast({
-        title: "Commande validée",
-        description: `La commande ${commandeId} a été validée avec succès.`,
+        title: "Commande Acceptée",
+        description: `La commande ${commandeId} a été Acceptée avec succès.`,
       });
     } catch (error) {
       console.error("Error validating order:", error);
@@ -434,7 +442,7 @@ export default function CommandeDetailsPage() {
         );
       }
 
-      setStatus("Rejetée");
+      setStatus("Annulée");
       toast({
         title: "Commande rejetée",
         description: `La commande ${commandeId} a été rejetée avec succès.`,
@@ -540,7 +548,7 @@ export default function CommandeDetailsPage() {
 
   const handleCreateFacture = async () => {
     try {
-      let status = "Envoyée";
+      let status = "En Attente";
       if (factureData.sendEmail == false) {
         status = "En attente";
       }
@@ -745,7 +753,7 @@ export default function CommandeDetailsPage() {
               {commandeId}
             </h1>
             <StatusBadge
-              status={status === "Validée" ? "Acceptée" : status}
+              status={status === "Acceptée" ? "Acceptée" : status}
               className="ml-2"
             />
           </div>
@@ -774,7 +782,7 @@ export default function CommandeDetailsPage() {
                 </Button>
               </>
             ))}
-          {status === "Expédiée" && (
+          {(status === "Expédiée" || status === "Acceptée") && (
             <Button
               variant="outline"
               className="gap-2 mr-auto"
@@ -784,7 +792,7 @@ export default function CommandeDetailsPage() {
               Mise à jour localisation
             </Button>
           )}
-          {(status === "Validée" ||
+          {(status === "Acceptée" ||
             status === "Expédiée" ||
             status === "Livrée") &&
             (commande.factures?.some(
@@ -998,7 +1006,7 @@ export default function CommandeDetailsPage() {
               </CardContent>
             </Card>
           </div>
-          {status === "Validée" && (
+          {status === "Acceptée" && (
             <div className="flex justify-end mt-4">
               <Button
                 className="gap-2 bg-blue-500 hover:bg-blue-600"
@@ -1151,13 +1159,6 @@ export default function CommandeDetailsPage() {
                             </span>
                           </Button>
                         </a>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteDocument(document.id)}
-                        >
-                          Supprimer
-                        </Button>
                       </div>
                     </div>
                   ))}
@@ -1286,274 +1287,130 @@ export default function CommandeDetailsPage() {
       <Dialog open={isFactureDialogOpen} onOpenChange={setIsFactureDialogOpen}>
         <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Créer une facture</DialogTitle>
+            <DialogTitle>Nouvelle Facture</DialogTitle>
             <DialogDescription>
-              Créez une facture pour la commande {commandeId}.
+              Détails de facturation pour la commande n°{commandeId}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-6 py-4">
-            {/* Section Informations Client */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Informations client</h3>
-              <div className="p-4 rounded-lg bg-muted/50">
-                <div className="grid grid-cols-1 gap-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      Nom du client:
-                    </span>
-                    <span className="font-medium">
-                      {commande ? commande.client.nom : ""}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      Email:
-                    </span>
-                    <span className="font-medium">
-                      {commande ? commande.client.email : ""}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      Téléphone:
-                    </span>
-                    <span className="font-medium">
-                      {commande ? commande.client.telephone : ""}
-                    </span>
-                  </div>
-                </div>
-              </div>
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="adresseFacturationDifferente"
-                  name="adresseFacturationDifferente"
-                  checked={factureData.adresseFacturationDifferente}
-                  onCheckedChange={(checked) =>
-                    setFactureData({
-                      ...factureData,
-                      adresseFacturationDifferente: checked,
-                    })
-                  }
-                />
-                <Label htmlFor="adresseFacturationDifferente">
-                  Adresse de facturation différente
-                </Label>
-              </div>
-
-              {factureData.adresseFacturationDifferente && (
-                <div className="space-y-2">
-                  <Label htmlFor="adresseFacturation">
-                    Adresse de facturation
-                  </Label>
-                  <Textarea
-                    id="adresseFacturation"
-                    name="adresseFacturation"
-                    value={factureData.adresseFacturation}
-                    onChange={handleFactureInputChange}
-                    placeholder="Saisissez l'adresse de facturation"
-                    rows={3}
-                  />
-                </div>
-              )}
+          {/* Informations client */}
+          <section className="space-y-4 py-1 ">
+            <h3 className="text-lg font-semibold">Client</h3>
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <p>
+                <strong>Nom :</strong> {commande?.client.nom}
+              </p>
+              <p>
+                <strong>Email :</strong> {commande?.client.email}
+              </p>
+              <p>
+                <strong>Téléphone :</strong> {commande?.client.telephone}
+              </p>
             </div>
 
-            {/* Section Informations Facture */}
-            <div className="space-y-4 pt-2 border-t">
-              <h3 className="text-lg font-medium pt-2">
-                Informations de facture
-              </h3>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="adresseFacturationDifferente"
+                checked={factureData.adresseFacturationDifferente}
+                onCheckedChange={(checked) =>
+                  setFactureData({
+                    ...factureData,
+                    adresseFacturationDifferente: checked,
+                  })
+                }
+              />
+              <Label htmlFor="adresseFacturationDifferente">
+                Adresse de facturation différente
+              </Label>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="numeroFacture">Numéro de facture</Label>
-                  <Input
-                    id="numeroFacture"
-                    name="numeroFacture"
-                    value={factureData.numeroFacture}
-                    onChange={handleFactureInputChange}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dateEmission">Date d'émission</Label>
-                  <Input
-                    type="date"
-                    id="dateEmission"
-                    name="dateEmission"
-                    value={factureData.dateEmission}
-                    onChange={handleFactureInputChange}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dateEcheance">Date d'échéance</Label>
-                  <Input
-                    type="date"
-                    id="dateEcheance"
-                    name="dateEcheance"
-                    value={factureData.dateEcheance}
-                    onChange={handleFactureInputChange}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="tauxTVA">Taux de TVA (%)</Label>
-                  <Select
-                    value={factureData.tauxTVA.toString()}
-                    onValueChange={(value) =>
-                      setFactureData({
-                        ...factureData,
-                        tauxTVA: Number.parseInt(value),
-                      })
-                    }
-                  >
-                    <SelectTrigger id="tauxTVA">
-                      <SelectValue placeholder="Sélectionner un taux de TVA" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="20">20%</SelectItem>
-                      <SelectItem value="10">10%</SelectItem>
-                      <SelectItem value="5.5">5.5%</SelectItem>
-                      <SelectItem value="0">0% (Exonéré)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
+            {factureData.adresseFacturationDifferente && (
               <div className="space-y-2">
-                <Label htmlFor="messageDescription">
-                  Message ou note (optionnel)
-                </Label>
+                <Label htmlFor="adresseFacturation">Adresse</Label>
                 <Textarea
-                  id="messageDescription"
-                  name="messageDescription"
-                  value={factureData.messageDescription}
+                  id="adresseFacturation"
+                  value={factureData.adresseFacturation}
                   onChange={handleFactureInputChange}
-                  placeholder="Ajoutez un message ou une note pour le client..."
-                  rows={3}
+                  placeholder="Saisissez l'adresse de facturation"
+                  rows={2}
                 />
               </div>
+            )}
+          </section>
+
+          {/* Détails facture */}
+          <section className="space-y-4 border-t pt-4">
+            <h3 className="text-lg font-semibold">Facture</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField
+                label="Numéro de facture"
+                id="numeroFacture"
+                value={factureData.numeroFacture}
+                onChange={handleFactureInputChange}
+              />
+              <InputField
+                label="Date d'émission"
+                id="dateEmission"
+                type="date"
+                value={factureData.dateEmission}
+                onChange={handleFactureInputChange}
+              />
             </div>
+          </section>
 
-            {/* Section Récapitulatif des montants */}
-            <div className="space-y-4 pt-2 border-t">
-              <h3 className="text-lg font-medium pt-2">
-                Récapitulatif des montants
-              </h3>
+          {/* Montants */}
+          <section className="space-y-4 border-t pt-4">
+            <h3 className="text-lg font-semibold">Montants</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField
+                label="Montant HT (€)"
+                id="montantHT"
+                type="number"
+                step="0.01"
+                value={factureData.montantHT}
+                onChange={handleFactureInputChange}
+              />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="montantHT">Montant HT (€)</Label>
-                  <Input
-                    id="montantHT"
-                    name="montantHT"
-                    type="number"
-                    step="0.01"
-                    value={factureData.montantHT}
-                    onChange={handleFactureInputChange}
-                  />
-                </div>
+              <InputField
+                label="Taux de TVA (%)"
+                id="tauxTVA"
+                type="number"
+                step="0.01"
+                value={factureData.tauxTVA}
+                onChange={(e) => {
+                  const taux = parseFloat(e.target.value);
+                  const ht = parseFloat(factureData.montantHT);
+                  const tva = ((ht * taux) / 100).toFixed(2);
+                  const ttc = (ht + parseFloat(tva)).toFixed(2);
+                  setFactureData({
+                    ...factureData,
+                    tauxTVA: taux,
+                    montantTVA: tva,
+                    montantTTC: ttc,
+                  });
+                }}
+              />
 
-                <div className="space-y-2">
-                  <Label htmlFor="tauxTVA">Taux de TVA (%)</Label>
-                  <Select
-                    value={factureData.tauxTVA.toString()}
-                    onValueChange={(value) => {
-                      const taux = Number.parseInt(value);
-                      const ht = Number.parseFloat(factureData.montantHT);
-                      const tva = ((ht * taux) / 100).toFixed(2);
-                      const ttc = (ht + Number.parseFloat(tva)).toFixed(2);
-                      setFactureData({
-                        ...factureData,
-                        tauxTVA: taux,
-                        montantTVA: tva,
-                        montantTTC: ttc,
-                      });
-                    }}
-                  >
-                    <SelectTrigger id="tauxTVA">
-                      <SelectValue placeholder="Sélectionner un taux de TVA" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="20">20%</SelectItem>
-                      <SelectItem value="10">10%</SelectItem>
-                      <SelectItem value="5.5">5.5%</SelectItem>
-                      <SelectItem value="0">0% (Exonéré)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="montantTVA">Montant TVA (€)</Label>
-                  <Input
-                    id="montantTVA"
-                    name="montantTVA"
-                    type="number"
-                    step="0.01"
-                    readOnly
-                    value={
-                      (factureData.montantTVA = (
-                        Number.parseFloat(factureData.montantHT) *
-                        (Number.parseFloat(factureData.tauxTVA) / 100)
-                      ).toFixed(2))
-                    }
-                    onChange={(e) => {
-                      const tva = e.target.value;
-                      const ht = Number.parseFloat(factureData.montantHT);
-                      const ttc = (ht + Number.parseFloat(tva)).toFixed(2);
-
-                      setFactureData({
-                        ...factureData,
-                        montantTVA: tva,
-                        montantTTC: ttc,
-                      });
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="montantTTC">Total TTC (€)</Label>
-                  <Input
-                    id="montantTTC"
-                    name="montantTTC"
-                    type="number"
-                    step="0.01"
-                    readOnly
-                    value={
-                      (factureData.montantTTC =
-                        Number(factureData.montantHT) +
-                        Number(factureData.montantTVA))
-                    }
-                    onChange={handleFactureInputChange}
-                  />
-                </div>
-              </div>
+              <InputField
+                label="TVA (€)"
+                id="montantTVA"
+                type="number"
+                step="0.01"
+                value={factureData.montantTVA}
+                readOnly
+              />
+              <InputField
+                label="Total TTC (€)"
+                id="montantTTC"
+                type="number"
+                step="0.01"
+                value={factureData.montantTTC}
+                readOnly
+              />
             </div>
+          </section>
 
-            {/* Section Options d'envoi */}
-            <div className="space-y-4 pt-2 border-t">
-              <h3 className="text-lg font-medium pt-2">Options d'envoi</h3>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="sendEmail"
-                  name="sendEmail"
-                  checked={factureData.sendEmail}
-                  onCheckedChange={(checked) =>
-                    setFactureData({
-                      ...factureData,
-                      sendEmail: checked,
-                    })
-                  }
-                />
-                <Label htmlFor="sendEmail">
-                  Envoyer la facture par email au client
-                </Label>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
+          <DialogFooter className="pt-4">
             <Button
               variant="outline"
               onClick={() => setIsFactureDialogOpen(false)}
@@ -1566,13 +1423,11 @@ export default function CommandeDetailsPage() {
             >
               {factureData.sendEmail ? (
                 <>
-                  <Send className="h-4 w-4" />
-                  Enregistrer et envoyer
+                  <Send className="h-4 w-4" /> Envoyer
                 </>
               ) : (
                 <>
-                  <FileText className="h-4 w-4" />
-                  Enregistrer la facture
+                  <FileText className="h-4 w-4" /> Enregistrer
                 </>
               )}
             </Button>

@@ -265,7 +265,7 @@ export default function CommandeDetailsPage() {
           );
         }
 
-        setStatus("Validée"); // or whatever you use
+        setStatus("Validée par l'assistant"); // or whatever you use
         toast({
           title: "Commande validée",
           description: `La commande ${commandeId} a été validée avec succès.`,
@@ -766,7 +766,6 @@ export default function CommandeDetailsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
-                      <TableHead className="w-[80px]">Image</TableHead>
                       <TableHead className="w-[100px]">ID Produit</TableHead>
                       <TableHead>Nom</TableHead>
                       <TableHead>Catégorie</TableHead>
@@ -784,13 +783,6 @@ export default function CommandeDetailsPage() {
                   <TableBody>
                     {commande.produits.map((produit) => (
                       <TableRow key={produit.id}>
-                        <TableCell>
-                          <img
-                            src={produit.image || "/placeholder.svg"}
-                            alt={produit.nom}
-                            className="w-16 h-16 object-contain rounded-md border"
-                          />
-                        </TableCell>
                         <TableCell className="font-medium">
                           {produit.id}
                         </TableCell>
@@ -925,25 +917,13 @@ export default function CommandeDetailsPage() {
                               {agents.map((agent) => (
                                 <SelectItem key={agent.id} value={agent.id}>
                                   {agent.nom}
+                                  {""}
+                                  {agent.prenom} - {agent.adresse}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         </div>
-
-                        {selectedAgent && (
-                          <div>
-                            <Label htmlFor="adresse" className="text-green-700">
-                              Adresse de l’agent
-                            </Label>
-                            <Input
-                              id="adresse"
-                              value={selectedAgent.adresse}
-                              readOnly
-                              className="mt-1 border-green-200 bg-gray-100"
-                            />
-                          </div>
-                        )}
                       </div>
                     )}
                     {validationOption === "rejeter" && (

@@ -5,6 +5,7 @@ import {
   getReclamationDetails,
   updateReclamationStatus,
 } from "@/lib/assistant-service";
+import prisma from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
@@ -76,6 +77,16 @@ export async function PUT(
       status
     );
 
+    // Création de la notification
+    await prisma.notification.create({
+      data: {
+        type: "reclamation",
+        correspond: `Le statut de la réclamation #${reclamationId} a été mis à jour à "${status}".`,
+        lu: false,
+        assistantId,
+      },
+    });
+
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error updating reclamation:", error);
@@ -88,6 +99,7 @@ export async function PUT(
     );
   }
 }
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -106,11 +118,10 @@ export async function POST(
     const { response } = await request.json();
     const reclamationId = Number.parseInt(params.id);
     const assistantId = Number.parseInt(user.id);
-    console.log(assistantId, reclamationId);
-    console.log(response);
+
     if (!response) {
       return NextResponse.json(
-        { error: "La Reponse est requise" },
+        { error: "La Réponse est requise" },
         { status: 400 }
       );
     }
@@ -120,6 +131,16 @@ export async function POST(
       assistantId,
       response
     );
+
+    // Création de la notification
+    await prisma.notification.create({
+      data: {
+        type: "reclamation",
+        correspond: `Vous avez répondu à la réclamation #${reclamationId}.`,
+        lu: false,
+        assistantId,
+      },
+    });
 
     return NextResponse.json(result);
   } catch (error) {

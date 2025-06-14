@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { AdminSidebar } from "@/components/admin-sidebar";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { Toaster } from "@/components/ui/use-toast";
+import { AdminNavbar } from "@/components/admin-navbar";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -10,7 +10,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col">
-      <DashboardHeader userType="admin" />
+      <AdminNavbar  />
       <div className="flex flex-1">
         <div className="hidden md:block w-72">
           <AdminSidebar />

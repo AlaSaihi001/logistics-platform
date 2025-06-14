@@ -362,7 +362,7 @@ export default function AssistantDashboardPage() {
                       </div>
                       <Button asChild size="sm">
                         <Link
-                          href={`/dashboard/assistant/commandes/${order.id}`}
+                          href={`/dashboard/assistant/commande/${order.id}`}
                         >
                           Voir détails
                         </Link>

@@ -68,7 +68,7 @@ export default function ClaimDetailPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "résolu" }),
+        body: JSON.stringify({ status: "Résolu" }),
       });
 
       if (response.ok) {
@@ -76,7 +76,7 @@ export default function ClaimDetailPage() {
           title: "Réclamation résolue",
           description: "La réclamation a été marquée comme résolue.",
         });
-        setClaim({ ...claim, status: "résolu" }); // Update status locally
+        setClaim({ ...claim, status: "Résolu" }); // Update status locally
       } else {
         throw new Error("Erreur lors de la mise à jour du statut");
       }
@@ -171,7 +171,7 @@ export default function ClaimDetailPage() {
               )}
             </div>
 
-            {claim.status !== "résolu" && (
+            {claim.status !== "Résolu" && (
               <Button
                 variant="outline"
                 size="sm"

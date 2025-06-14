@@ -50,19 +50,11 @@ interface ClientDashboardProps {
 }
 
 const fetchClientOrders = async (clientId: number) => {
-  try {
-    const ordersResponse = await fetch(
-      `/api/client/commandes?clientId=${clientId}`
-    );
-    if (!ordersResponse.ok) {
-      throw new Error(
-        `Erreur lors du chargement des commandes: ${ordersResponse.status}`
-      );
-    }
-    return ordersResponse.json();
-  } catch (error) {
-    throw error;
+  const response = await fetch(`/api/client/commandes?clientId=${clientId}`);
+  if (!response.ok) {
+    throw new Error("Erreur lors du chargement des commandes.");
   }
+  return response.json();
 };
 
 export default function ClientDashboard({ clientId }: ClientDashboardProps) {
@@ -82,29 +74,19 @@ export default function ClientDashboard({ clientId }: ClientDashboardProps) {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-
       try {
-        // Récupérer les commandes du client avec son ID
         const ordersData = await fetchClientOrders(clientId);
+        setStats({
+          delivered: ordersData.filter((o: any) => o.statut === "Livrée")
+            .length,
+          shipped: ordersData.filter((o: any) => o.statut === "Expédiée")
+            .length,
+          pending: ordersData.filter((o: any) => o.statut === "En attente")
+            .length,
+          cancelled: ordersData.filter((o: any) => o.statut === "Annulée")
+            .length,
+        });
 
-        // Calculer les statistiques
-        const stats = {
-          delivered: ordersData.filter(
-            (order: any) => order.statut === "Livrée"
-          ).length,
-          shipped: ordersData.filter(
-            (order: any) => order.statut === "Expédiée"
-          ).length,
-          pending: ordersData.filter(
-            (order: any) => order.statut === "En attente"
-          ).length,
-          cancelled: ordersData.filter(
-            (order: any) => order.statut === "Annulée"
-          ).length,
-        };
-        setStats(stats);
-
-        // Récupérer les 3 dernières commandes
         const recent = ordersData
           .sort(
             (a: any, b: any) =>
@@ -123,16 +105,13 @@ export default function ClientDashboard({ clientId }: ClientDashboardProps) {
             merchandiseValue: order.valeurMarchandise,
             orderDate: new Date(order.createdAt).toLocaleDateString("fr-FR"),
           }));
+
         setRecentOrders(recent);
-      } catch (error) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Une erreur s'est produite lors du chargement des données"
-        );
+      } catch (err: any) {
+        setError(err.message);
         toast({
           title: "Erreur",
-          description: "Impossible de charger les données du tableau de bord",
+          description: "Impossible de charger les données.",
           variant: "destructive",
         });
       } finally {
@@ -147,46 +126,31 @@ export default function ClientDashboard({ clientId }: ClientDashboardProps) {
     switch (status) {
       case "En attente":
         return (
-          <Badge
-            variant="outline"
-            className="bg-orange-100 text-orange-800 border-orange-200"
-          >
+          <Badge className="bg-orange-100 text-orange-800 border-orange-200">
             <Clock className="mr-1 h-3 w-3" /> En attente
           </Badge>
         );
       case "Expédiée":
         return (
-          <Badge
-            variant="outline"
-            className="bg-blue-100 text-blue-800 border-blue-200"
-          >
-            <Truck className="mr-1 h-3 w-3" /> Expédié
+          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+            <Truck className="mr-1 h-3 w-3" /> Expédiée
           </Badge>
         );
       case "Livrée":
         return (
-          <Badge
-            variant="outline"
-            className="bg-green-100 text-green-800 border-green-200"
-          >
-            <CheckCircle className="mr-1 h-3 w-3" /> Livré
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            <CheckCircle className="mr-1 h-3 w-3" /> Livrée
           </Badge>
         );
       case "Annulée":
         return (
-          <Badge
-            variant="outline"
-            className="bg-red-100 text-red-800 border-red-200"
-          >
-            <XCircle className="mr-1 h-3 w-3" /> Annulé
+          <Badge className="bg-red-100 text-red-800 border-red-200">
+            <XCircle className="mr-1 h-3 w-3" /> Annulée
           </Badge>
         );
       case "Archivée":
         return (
-          <Badge
-            variant="outline"
-            className="bg-[#f3f4f6] text-[#1f2937] border-[#e5e7eb]"
-          >
+          <Badge className="bg-gray-100 text-gray-800 border-gray-300">
             <Archive className="mr-1 h-3 w-3" /> Archivée
           </Badge>
         );
@@ -196,62 +160,51 @@ export default function ClientDashboard({ clientId }: ClientDashboardProps) {
   };
 
   return (
-    <DashboardShell>
+    <DashboardShell className=" sm:px-6 lg:px-8 ">
       <DashboardHeader
         heading="Tableau de bord"
         description={`Bienvenue ${
           user?.name || ""
-        }! Voici un aperçu de votre activité sur la plateforme`}
+        } ! Voici un aperçu de votre activité.`}
       />
-
       <DashboardContent>
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Erreur</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-4"
-              onClick={() => setError(null)}
-            >
+            <Button onClick={() => setError(null)} size="sm" className="ml-4">
               Réessayer
             </Button>
           </Alert>
         )}
 
-        {/* Statistiques */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* STATISTIQUES */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {loading ? (
-            <>
-              <Skeleton className="h-32" />
-              <Skeleton className="h-32" />
-              <Skeleton className="h-32" />
-              <Skeleton className="h-32" />
-            </>
+            [...Array(4)].map((_, i) => <Skeleton key={i} className="h-32" />)
           ) : (
             <>
               <StatCard
-                title="Commandes livrées"
+                title="Livrées"
                 value={stats.delivered.toString()}
                 icon={CheckCircle}
                 colorScheme="green"
               />
               <StatCard
-                title="Commandes expédiées"
+                title="Expédiées"
                 value={stats.shipped.toString()}
                 icon={Truck}
                 colorScheme="blue"
               />
               <StatCard
-                title="Commandes en attente"
+                title="En attente"
                 value={stats.pending.toString()}
                 icon={Clock}
                 colorScheme="amber"
               />
               <StatCard
-                title="Commandes annulées"
+                title="Annulées"
                 value={stats.cancelled.toString()}
                 icon={XCircle}
                 colorScheme="red"
@@ -260,52 +213,100 @@ export default function ClientDashboard({ clientId }: ClientDashboardProps) {
           )}
         </div>
 
-        {/* Dernières commandes */}
-        <Card>
+        {/* COMMANDES RÉCENTES */}
+        <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Dernières commandes passées</CardTitle>
+            <CardTitle>Dernières commandes</CardTitle>
             <CardDescription>Vos 3 dernières commandes</CardDescription>
           </CardHeader>
+
           <CardContent>
             {loading ? (
-              <Skeleton className="h-64" />
+              <Skeleton className="h-64 w-full" />
             ) : (
-              <DataTable
-                data={recentOrders}
-                columns={[
-                  {
-                    header: "Numéro de commande",
-                    accessorKey: "orderId",
-                    className: "font-medium",
-                  },
-                  { header: "Nom de la commande", accessorKey: "orderName" },
-                  { header: "Mode de transport", accessorKey: "transportType" },
-                  { header: "Date de commande", accessorKey: "orderDate" },
-                  {
-                    header: "Fournisseur/Destinataire",
-                    accessorKey: "recipientName",
-                  },
-                  {
-                    header: "Statut",
-                    accessorKey: "status",
-                    cell: (item) => getStatusBadge(item.status),
-                  },
-                  {
-                    header: "Actions",
-                    accessorKey: "orderId",
-                    className: "text-right",
-                    cell: (item) => (
+              <>
+                {/* Version mobile : cartes verticales */}
+                <div className="sm:hidden space-y-4">
+                  {recentOrders.map((order) => (
+                    <div
+                      key={order.orderId}
+                      className="border rounded-lg p-4 shadow-sm"
+                    >
+                      <div className="flex justify-between items-center mb-2">
+                        <p className="text-base font-semibold">
+                          {order.orderName}
+                        </p>
+                        {getStatusBadge(order.status)}
+                      </div>
+                      <p className="text-sm">N°: {order.orderId}</p>
+                      <p className="text-sm">
+                        Transport: {order.transportType}
+                      </p>
+                      <p className="text-sm">Date: {order.orderDate}</p>
+                      <p className="text-sm">
+                        Destinataire: {order.recipientName}
+                      </p>
                       <Link
-                        href={`/dashboard/client/commandes/${item.orderId}`}
+                        href={`/dashboard/client/commandes/${order.orderId}`}
                       >
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2 w-full whitespace-nowrap"
+                        >
                           Détails
                         </Button>
                       </Link>
-                    ),
-                  },
-                ]}
-              />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Version desktop : tableau */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <div className="min-w-[700px] text-sm">
+                    <DataTable
+                      data={recentOrders}
+                      columns={[
+                        {
+                          header: "N°",
+                          accessorKey: "orderId",
+                          className: "font-medium",
+                        },
+                        { header: "Commande", accessorKey: "orderName" },
+                        { header: "Transport", accessorKey: "transportType" },
+                        { header: "Date", accessorKey: "orderDate" },
+                        {
+                          header: "Destinataire",
+                          accessorKey: "recipientName",
+                        },
+                        {
+                          header: "Statut",
+                          accessorKey: "status",
+                          cell: (item) => getStatusBadge(item.status),
+                        },
+                        {
+                          header: "Actions",
+                          accessorKey: "orderId",
+                          className: "text-right",
+                          cell: (item) => (
+                            <Link
+                              href={`/dashboard/client/commandes/${item.orderId}`}
+                            >
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="whitespace-nowrap"
+                              >
+                                Détails
+                              </Button>
+                            </Link>
+                          ),
+                        },
+                      ]}
+                    />
+                  </div>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

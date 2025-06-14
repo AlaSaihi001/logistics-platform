@@ -19,7 +19,7 @@ model Client {
   telephone              Int
   motDePasse             String
   image                  String?
-  adresse                String? 
+  adresse                String?
   role                   String         @default("CLIENT")
   commandes              Commande[]
   factures               Facture[]
@@ -39,7 +39,7 @@ model Assistant {
   telephone              Int
   motDePasse             String
   image                  String?
-  adresse                String? 
+  adresse                String?
   role                   String         @default("ASSISTANT")
   commandes              Commande[]     @relation("AssistantCommandes")
   factures               Facture[]      @relation("AssistantFactures")
@@ -55,7 +55,7 @@ model Agent {
   prenom                 String
   email                  String         @unique
   indicatifPaysTelephone String
-  adresse                String? 
+  adresse                String?
   telephone              Int
   motDePasse             String
   image                  String?
@@ -74,7 +74,7 @@ model Administrateur {
   prenom                 String
   email                  String   @unique
   indicatifPaysTelephone String
-  adresse                String? 
+  adresse                String?
   telephone              Int
   motDePasse             String
   image                  String?
@@ -158,21 +158,23 @@ model Facture {
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 }
+
 model PaymentMethod {
-  id          String   @id @default(uuid())  // Unique identifier, generated as UUID
-  nom         String                        // Name of the payment method
-  description String                        // Description of the payment method
-  frais       String                        // Fees as a string (consider changing type if numeric)
-  fraisFixe   String                        // Fixed fees as a string (consider numeric)
-  statut      Statut                        // Status enum: actif or inactif
-  dateCreation DateTime                    // Creation date
-  derniereMaj DateTime                     // Last update date
+  id           String   @id @default(uuid()) // Unique identifier, generated as UUID
+  nom          String // Name of the payment method
+  description  String // Description of the payment method
+  frais        String // Fees as a string (consider changing type if numeric)
+  fraisFixe    String // Fixed fees as a string (consider numeric)
+  statut       Statut // Status enum: actif or inactif
+  dateCreation DateTime // Creation date
+  derniereMaj  DateTime // Last update date
 }
 
 enum Statut {
   actif
   inactif
 }
+
 model Paiement {
   id           Int       @id @default(autoincrement())
   idFacture    Int       @unique
@@ -220,18 +222,18 @@ model Reclamation {
 }
 
 model Document {
-  id        Int      @id @default(autoincrement())
-  idAgent   Int
-  commandeId  Int
-  nom       String
-  size      Float
-  url       String
-  type      String
-  statut    String   @default("À valider")
-  agent     Agent    @relation(fields: [idAgent], references: [id])
-  commande  Commande @relation(fields: [commandeId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  idAgent    Int
+  commandeId Int
+  nom        String
+  size       Float
+  url        String
+  type       String
+  statut     String   @default("À valider")
+  agent      Agent    @relation(fields: [idAgent], references: [id])
+  commande   Commande @relation(fields: [commandeId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 /////////////////////////////////////////////////////////////////////

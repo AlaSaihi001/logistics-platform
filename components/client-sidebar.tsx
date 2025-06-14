@@ -59,8 +59,14 @@ export function ClientSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 flex-col border-r bg-muted/40">
+    <div className="w-64 flex-col bg-muted/40">
       <nav className="grid gap-2 p-4">
+        <h2 className="mb-2 px-2 text-xl font-semibold tracking-tight text-black">
+          Client Logistique
+        </h2>
+        <p className="text-sm text-muted-foreground px-2 mb-6">
+          Gestion des commandes, payer les factures, et plus encore...
+        </p>
         {sidebarLinks.map((link, index) => (
           <Link
             key={index}
@@ -87,6 +93,6 @@ export function ClientSidebar() {
           </Link>
         </Button>
       </nav>
-    </aside>
+    </div>
   );
 }

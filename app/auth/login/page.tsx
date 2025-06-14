@@ -25,8 +25,8 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const redirectTo = `/dashboard/client`;
 
-  const [email, setEmail] = useState("ala@gmail.m");
-  const [password, setPassword] = useState("ala123!!!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{
     email?: string;

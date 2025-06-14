@@ -142,7 +142,7 @@ export default function UtilisateursPage() {
       user.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.telephone.toLowerCase().includes(searchTerm.toLowerCase());
+      user.telephone.toString().toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesType = typeFilter === "all" || user.type === typeFilter;
 
@@ -192,10 +192,7 @@ export default function UtilisateursPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            <span>Exporter</span>
-          </Button>
+          
           <Button className="gap-2" asChild>
             <Link href="/dashboard/admin/utilisateurs/ajouter">
               <Plus className="h-4 w-4" />
@@ -390,13 +387,6 @@ export default function UtilisateursPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>
-                              <Link
-                                href={`/dashboard/admin/utilisateurs/${user.id}`}
-                              >
-                                Voir détails
-                              </Link>
-                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
                                 router.push(

@@ -249,15 +249,6 @@ export default function AdminPaymentsPage() {
         <h1 className="text-3xl font-bold tracking-tight">
           Gestion des paiements
         </h1>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={handleRefresh}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={handleExport}>
-            <Download className="h-4 w-4" />
-          </Button>
-          <DateRangePicker onChange={handleDateRangeChange} />
-        </div>
       </div>
 
       {error && (

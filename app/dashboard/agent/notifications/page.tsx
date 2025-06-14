@@ -158,34 +158,11 @@ export default function NotificationsPage() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Rechercher des notifications..."
-            className="w-full pl-8"
-          />
-        </div>
-        <Button variant="outline" size="sm" className="h-9 gap-1">
-          <Filter className="h-4 w-4" />
-          Filtrer
-        </Button>
+        
       </div>
 
       <Tabs defaultValue="all">
-        <TabsList>
-          <TabsTrigger value="all">Toutes</TabsTrigger>
-          <TabsTrigger value="unread">
-            Non lues
-            {unreadCount > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {unreadCount}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="commandes">Commandes</TabsTrigger>
-          <TabsTrigger value="system">Système</TabsTrigger>
-        </TabsList>
+        
 
         <TabsContent value="all" className="space-y-4 mt-4">
           {notifications.map((notification) => (

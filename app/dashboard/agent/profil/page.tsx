@@ -199,7 +199,22 @@ export default function ProfilPage() {
     // Redirection vers la page de connexion
     // window.location.href = "/auth/agent/login"
   };
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setAvatarFile(file);
 
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   return (
     <div className="space-y-6">
       <div>
@@ -216,10 +231,36 @@ export default function ProfilPage() {
           </CardHeader>
           <CardContent className="flex flex-col items-center text-center">
             <Avatar className="h-24 w-24 mb-4 border-4 border-background">
-              <AvatarImage
-                src={profile?.image}
-                alt={`${formData?.prenom} ${formData?.nom}`}
-              />
+              <div className="relative mb-4">
+                <Avatar className="h-24 w-24 border-4 border-background">
+                  <AvatarImage
+                    src={
+                      avatarPreview ||
+                      profile?.image ||
+                      "/placeholder.svg?height=96&width=96"
+                    }
+                    alt={`${profile?.prenom} ${profile?.nom}`}
+                  />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                    {profile?.prenom?.[0]}
+                    {profile?.nom?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <label
+                  htmlFor="avatar-upload"
+                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1 cursor-pointer shadow-md hover:bg-primary/90 transition-colors"
+                >
+                  <User className="h-4 w-4" />
+                  <span className="sr-only">Changer l'avatar</span>
+                </label>
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+              </div>
               <AvatarFallback className="bg-primary/10 text-primary text-xl">
                 {formData?.prenom}
                 {formData?.nom}
